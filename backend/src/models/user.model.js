@@ -1,4 +1,3 @@
-import { PhoneNumber } from "@clerk/express";
 import mongoose from "mongoose";
 
 const addressSchema = new mongoose.Schema({
@@ -12,7 +11,7 @@ const addressSchema = new mongoose.Schema({
   city: { type: String, required: true },
   stateCode: { type: String, required: true },
   zip: { type: String, required: true },
-  PhoneNumber: { type: String, required: true },
+  phoneNumber: { type: String, required: true },
   country: { type: String, required: true },
   isDefault: { type: Boolean, default: false },
 
@@ -24,8 +23,7 @@ const userSchema = new mongoose.Schema({
   imageUrl: { type: String, default: "" },
   clerkId: { type: String, required: true, unique: true },
   addresses: [addressSchema],
-  wishlist: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Product' }],                 
-  createdAt: { type: Date, default: Date.now }
+  wishlist: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Product' }]
 },
 { timestamps: true }
 );

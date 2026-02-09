@@ -1,11 +1,11 @@
-import './App.css'
 import { SignedIn, SignedOut, SignInButton, UserButton } from '@clerk/clerk-react'
 
-function App() {
+import React from 'react'
 
+const App = () => {
   return (
     <div>
-      <h1>HOME PAGE</h1>
+    <h1>HOME PAGE</h1>
     
     <SignedOut>
       <SignInButton mode="modal" />
@@ -13,9 +13,11 @@ function App() {
 
     <SignedIn >
       <UserButton />
-    </SignedIn>
+    </SignedIn>      
     </div>
   )
 }
 
 export default App
+
+

@@ -13,9 +13,14 @@ const syncUser = inngest.createFunction(
     await connectDB();
     const { id, email_addresses,first_name,last_name,image_url } = event.data
 
+    if (!Array.isArray(email_addresses) || !email_addresses[0] || !email_addresses[0].email_address) {
+      console.warn('Sync-User: missing email for clerk user', id)
+      return
+    }
+
     const newUser = {
       clerkId: id,
-      email: email_addresses[0]?.email_address,
+      email: email_addresses[0].email_address,
       name: `${first_name || ""} ${last_name || ""}`.trim() || "Unknown User",
       imageUrl: image_url,
       addresses: [],
@@ -41,8 +46,3 @@ const deleteUserFromDB = inngest.createFunction(
 )   
 
 export const functions = [syncUser, deleteUserFromDB];
-
-export const userSignedIn = inngest.createEvent(
-  { name: 'user.signed_in' },
-  syncUser
-)   
