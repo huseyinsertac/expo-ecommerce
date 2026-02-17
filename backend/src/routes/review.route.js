@@ -13,3 +13,5 @@ router.post('/', protectiveRoute, createReview);
 router.get('/product/:productId', getProductReviews);
 
 router.delete('/:id', protectiveRoute, deleteReview);
+
+export default router;

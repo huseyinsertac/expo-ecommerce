@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { addAddress } from '../controllers/user.controller.js';
 
 const router = Router();
 
@@ -25,11 +26,6 @@ router.delete('/wishlist/:productId', (req, res) => {
   res.status(200).json({ message: 'Remove from wishlist endpoint' });
 });
 
-function protectRoute(req, res, next) {
-  // Placeholder for authentication logic
-  // In a real application, you would verify the user's token or session here
-  next();
-}
 export default router;
 
 import { addAddress } from '../controllers/user.controller.js';

@@ -3,7 +3,12 @@ import {
   createProduct,
   updateProduct,
   deleteProduct,
+  getProducts,
 } from '../controllers/admin.controller.js';
+import {
+  getAllOrders,
+  updateOrderStatus,
+} from '../controllers/order.controller.js';
 import { adminOnly, protectRoute } from '../middleware/auth.middleware.js';
 import upload from '../middleware/multer.middleware.js';
 
