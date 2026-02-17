@@ -1,11 +1,11 @@
-import mongoose from "mongoose";
+import mongoose from 'mongoose';
 
 const addressSchema = new mongoose.Schema({
-  label:{
+  label: {
     type: String,
-    required: true
+    required: true,
   },
-  fullName:{ type: String, required: true },
+  fullName: { type: String, required: true },
   streetAddress: { type: String, required: true },
   street: { type: String, required: true },
   city: { type: String, required: true },
@@ -14,20 +14,20 @@ const addressSchema = new mongoose.Schema({
   phoneNumber: { type: String, required: true },
   country: { type: String, required: true },
   isDefault: { type: Boolean, default: false },
-
 });
 
-const userSchema = new mongoose.Schema({
-  email: { type: String, required: true },
-  name: { type: String },
-  imageUrl: { type: String, default: "" },
-  clerkId: { type: String, required: true, unique: true },
-  addresses: [addressSchema],
-  wishlist: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Product' }]
-},
-{ timestamps: true }
+const userSchema = new mongoose.Schema(
+  {
+    email: { type: String, required: true },
+    name: { type: String },
+    imageUrl: { type: String, default: '' },
+    clerkId: { type: String, required: true, unique: true },
+    addresses: [addressSchema],
+    wishlist: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Product' }],
+  },
+  { timestamps: true }
 );
 
-const User = mongoose.model("User", userSchema);
+const User = mongoose.model('User', userSchema);
 
 export default User;
