@@ -1,5 +1,7 @@
 import cloudinary from '../config/cloudinary.js';
-import { Product } from '../models/product.model.js';
+import Product from '../models/product.model.js';
+import Order from '../models/order.model.js';
+import User from '../models/user.model.js';
 export async function adminController(req, res) {
   try {
     // Your admin logic here
@@ -57,9 +59,8 @@ export async function updateProduct(req, res) {
       });
 
       const uploadResults = await Promise.all(uploadPromises);
-      const imageUrls = uploadResults.map((result) => result.secure_url);
 
-      updatedProduct.images = imageUrls;
+      updatedProduct.images = uploadResults;
       await updatedProduct.save();
     }
 
@@ -86,6 +87,101 @@ export async function getAllProducts(_, res) {
     res.status(200).json(products);
   } catch (error) {
     console.error('Error fetching productsz:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+}
+
+export async function getAllOrders(_, res) {
+  try {
+    const orders = await Order.find()
+      .populate('user', 'name email')
+      .populate('items.productId', 'name price')
+      .sort({ createdAt: -1 });
+    res.status(200).json({ orders });
+  } catch (error) {
+    console.error('Error fetching orders:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+}
+
+export async function updateOrderStatus(req, res) {
+  try {
+    const { orderId } = req.params;
+    const { status } = req.body;
+
+    if (!['pending', 'shipped', 'delivered', 'cancelled'].includes(status)) {
+      return res.status(400).json({ message: 'Invalid status' });
+    }
+
+    const order = await Order.findById(orderId);
+    if (!order) {
+      return res.status(404).json({ message: 'Order not found' });
+    }
+
+    order.status = status;
+
+    if (status === 'shipped' && !order.shippedAt) {
+      order.shippedAt = new Date();
+    }
+
+    if (status === 'delivered' && !order.deliveredAt) {
+      order.deliveredAt = new Date();
+    }
+
+    await order.save();
+
+    if (!status) {
+      return res.status(400).json({ message: 'Status is required' });
+    }
+
+    res.status(200).json({ message: 'Order status updated successfully' });
+  } catch (error) {
+    console.error('Error updating order status:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+}
+
+export async function getAllCustomers(_, res) {
+  try {
+    const customers = await User.find({ role: 'customer' }).select(
+      'name email createdAt'
+    );
+    res.status(200).json({ customers });
+  } catch (error) {
+    console.error('Error fetching customers:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+}
+
+/**
+ * Retrieves dashboard statistics including total products, orders, customers, and revenue.
+ * @param {Object} _ - Express request object (unused).
+ * @param {Object} res - Express response object.
+ * @returns {Object} JSON object containing totalRevenue, totalOrders, totalCustomers, and totalProducts.
+ */
+export async function getDashboardStats(_, res) {
+  try {
+    const totalProducts = await Product.countDocuments();
+    const totalOrders = await Order.countDocuments();
+    const totalRevenue = await Order.aggregate([
+      { $match: { status: 'delivered' } },
+      { $unwind: '$items' },
+      {
+        $group: {
+          _id: null,
+          revenue: { $sum: { $multiply: ['$items.quantity', '$items.price'] } },
+        },
+      },
+    ]);
+
+    res.status(200).json({
+      totalRevenue: totalRevenue[0] ? totalRevenue[0].revenue : 0,
+      totalOrders,
+      totalCustomers: await User.countDocuments({ role: 'customer' }),
+      totalProducts,
+    });
+  } catch (error) {
+    console.error('Error fetching dashboard stats:', error);
     res.status(500).json({ message: 'Internal server error' });
   }
 }
