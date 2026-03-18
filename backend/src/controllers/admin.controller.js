@@ -130,10 +130,6 @@ export async function updateOrderStatus(req, res) {
 
     await order.save();
 
-    if (!status) {
-      return res.status(400).json({ message: 'Status is required' });
-    }
-
     res.status(200).json({ message: 'Order status updated successfully' });
   } catch (error) {
     console.error('Error updating order status:', error);

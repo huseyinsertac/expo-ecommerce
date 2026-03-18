@@ -6,7 +6,7 @@ export const protectRoute = [
   requireAuth({ apiKey: ENV.CLERK_API_KEY }),
   async (req, res, next) => {
     try {
-      const { clerkId } = req.auth.userId;
+      const clerkId = req.auth?.userId;
       if (!clerkId) {
         return res.status(401).json({ message: 'Unauthorized' });
       }
@@ -20,7 +20,7 @@ export const protectRoute = [
       next();
     } catch (error) {
       console.error('Error in protectRoute middleware:', error);
-      res.status(500).json({ message: 'Internalserver error' });
+      res.status(500).json({ message: 'Internal server error' });
     }
   },
 ];

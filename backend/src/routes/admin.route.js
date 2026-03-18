@@ -11,7 +11,6 @@ import {
 import { getAllOrders } from '../controllers/order.controller.js';
 import { adminOnly, protectRoute } from '../middleware/auth.middleware.js';
 import upload from '../middleware/multer.middleware.js';
-import { get } from 'http';
 
 const router = Router();
 
