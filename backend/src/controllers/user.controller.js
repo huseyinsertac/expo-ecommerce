@@ -15,6 +15,17 @@ export async function addAddress(req, res) {
 
     const user = req.user;
 
+    if (
+      !fullName ||
+      !streetAddress ||
+      !city ||
+      !state ||
+      !zipCode ||
+      !phoneNumber
+    ) {
+      return res.status(400).json({ message: 'All fields are required' });
+    }
+
     if (isDefault) {
       user.addresses.forEach((addr) => (addr.isDefault = false));
     }
@@ -140,7 +151,7 @@ export async function removeFromWishlist(req, res) {
     const user = req.user;
 
     if (!user.wishlist.includes(productId)) {
-      return res.status(404).json({ message: 'Product not even in wishlist' });
+      return res.status(404).json({ message: 'Product not found in wishlist' });
     }
 
     user.wishlist.pull(productId);
@@ -155,7 +166,8 @@ export async function removeFromWishlist(req, res) {
 
 export async function getWishlist(req, res) {
   try {
-    const user = req.user;
+    // we are using populate because wishlist is an array of product ids and we want to get the product details
+    const user = await User.findById(req.user._id).populate('wishlist');
     res.status(200).json({ wishlist: user.wishlist });
   } catch (error) {
     console.error('Error fetching wishlist:', error);
