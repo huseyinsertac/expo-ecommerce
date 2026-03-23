@@ -1,31 +1,26 @@
 import { Router } from 'express';
-import { addAddress } from '../controllers/user.controller.js';
+import {
+  addAddress,
+  getAddresses,
+  updateAddress,
+  deleteAddress,
+} from '../controllers/user.controller.js';
+
+import { protectRoute } from '../middleware/auth.middleware.js';
 
 const router = Router();
 
 router.use(protectRoute);
 
-router.post('/addresses', addAddress);
-router.get('/addresses', (req, res) => {
-  res.status(200).json({ message: 'Get addresses endpoint' });
-});
-router.put('/addresses/:id', (req, res) => {
-  res.status(200).json({ message: 'Update address endpoint' });
-});
-router.delete('/addresses/:id', (req, res) => {
-  res.status(200).json({ message: 'Delete address endpoint' });
-});
+//address routes
+router.post('/addresses', protectRoute, addAddress);
+router.get('/addresses', protectRoute, getAddresses);
+router.put('/addresses/:addressId', protectRoute, updateAddress);
+router.delete('/addresses/:addressId', protectRoute, deleteAddress);
 
-router.post('/wishlist', (req, res) => {
-  res.status(200).json({ message: 'Add to wishlist endpoint' });
-});
-router.get('/wishlist', (req, res) => {
-  res.status(200).json({ message: 'Get wishlist endpoint' });
-});
-router.delete('/wishlist/:productId', (req, res) => {
-  res.status(200).json({ message: 'Remove from wishlist endpoint' });
-});
+//wishlist routes
+router.post('/wishlist', protectRoute, addToWishlist);
+router.get('/wishlist', protectRoute, getWishlist);
+router.delete('/wishlist/:productId', protectRoute, removeFromWishlist);
 
 export default router;
-
-import { addAddress } from '../controllers/user.controller.js';

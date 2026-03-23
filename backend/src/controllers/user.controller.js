@@ -1,42 +1,41 @@
+//use express async handler to catch errors sometime not now
 import { User } from '../models/user.model.js';
 export async function addAddress(req, res) {
   try {
-    const userId = req.user.id;
     const {
       label,
       fullName,
       streetAddress,
-      street,
       city,
-      stateCode,
-      zip,
+      state,
+      zipCode,
       phoneNumber,
-      country,
+      isDefault,
     } = req.body;
 
-    const newAddress = {
+    const user = req.user;
+
+    if (isDefault) {
+      user.addresses.forEach((addr) => (addr.isDefault = false));
+    }
+
+    user.addresses.push({
       label,
       fullName,
       streetAddress,
-      street,
       city,
-      stateCode,
-      zip,
+      state,
+      zipCode,
       phoneNumber,
-      country,
-    };
+      isDefault: isDefault || false,
+    });
 
-    const user = await User.findById(userId);
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
-
-    user.addresses.push(newAddress);
     await user.save();
 
-    res
-      .status(201)
-      .json({ message: 'Address added successfully', address: newAddress });
+    res.status(201).json({
+      message: 'Address added successfully',
+      addresses: user.addresses,
+    });
   } catch (error) {
     console.error('Error adding address:', error);
     res.status(500).json({ message: 'Internal server error' });
@@ -58,42 +57,44 @@ export async function getAddresses(req, res) {
 
 export async function updateAddress(req, res) {
   try {
-    const userId = req.user.id;
-    const addressId = req.params.id;
-    const {
-      label,
-      fullName,
-      streetAddress,
-      street,
-      city,
-      stateCode,
-      zip,
-      phoneNumber,
-      country,
-    } = req.body;
+    const addressId = req.params;
 
-    const user = await User.findById(userId);
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
-
+    const user = req.user;
     const address = user.addresses.id(addressId);
 
     if (!address) {
       return res.status(404).json({ message: 'Address not found' });
     }
+    const {
+      label,
+      fullName,
+      streetAddress,
+      city,
+      state,
+      zipCode,
+      phoneNumber,
+      isDefault,
+    } = req.body;
+
+    if (isDefault) {
+      user.addresses.forEach((addr) => (addr.isDefault = false));
+    }
+
     address.label = label || address.label;
     address.fullName = fullName || address.fullName;
     address.streetAddress = streetAddress || address.streetAddress;
     address.street = street || address.street;
     address.city = city || address.city;
-    address.stateCode = stateCode || address.stateCode;
-    address.zip = zip || address.zip;
+    address.state = state || address.state;
+    address.zipCode = zipCode || address.zipCode;
     address.phoneNumber = phoneNumber || address.phoneNumber;
-    address.country = country || address.country;
+    address.isDefault = isDefault || address.isDefault;
 
     await user.save();
-    res.status(200).json({ message: 'Address updated successfully', address });
+    res.status(200).json({
+      message: 'Address updated successfully',
+      addressses: user.addresses,
+    });
   } catch (error) {
     console.error('Error updating address:', error);
     res.status(500).json({ message: 'Internal server error' });
@@ -102,20 +103,10 @@ export async function updateAddress(req, res) {
 
 export async function deleteAddress(req, res) {
   try {
-    const userId = req.user.id;
-    const addressId = req.params.id;
+    const addressId = req.params;
+    const user = req.user;
 
-    const user = await User.findById(userId);
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
-
-    const address = user.addresses.id(addressId);
-    if (!address) {
-      return res.status(404).json({ message: 'Address not found' });
-    }
-
-    address.remove();
+    user.addresses.pull(addressId);
     await user.save();
 
     res.status(200).json({ message: 'Address deleted successfully' });
@@ -127,13 +118,8 @@ export async function deleteAddress(req, res) {
 
 export async function addToWishlist(req, res) {
   try {
-    const userId = req.user.id;
     const { productId } = req.body;
-
-    const user = await User.findById(userId);
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
+    const user = req.user;
 
     if (user.wishlist.includes(productId)) {
       return res.status(400).json({ message: 'Product already in wishlist' });
@@ -148,40 +134,31 @@ export async function addToWishlist(req, res) {
   }
 }
 
-export async function getWishlist(req, res) {
+export async function removeFromWishlist(req, res) {
   try {
-    const userId = req.user.id;
-    const user = await User.findById(userId).populate('wishlist');
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
+    const productId = req.params;
+    const user = req.user;
+
+    if (!user.wishlist.includes(productId)) {
+      return res.status(404).json({ message: 'Product not even in wishlist' });
     }
-    res.status(200).json({ wishlist: user.wishlist });
+
+    user.wishlist.pull(productId);
+    await user.save();
+
+    res.status(200).json({ message: 'Product removed from wishlist' });
   } catch (error) {
-    console.error('Error fetching wishlist:', error);
+    console.error('Error removing from wishlist:', error);
     res.status(500).json({ message: 'Internal server error' });
   }
 }
 
-export async function removeFromWishlist(req, res) {
+export async function getWishlist(req, res) {
   try {
-    const userId = req.user.id;
-    const productId = req.params.productId;
-
-    const user = await User.findById(userId);
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
-
-    const index = user.wishlist.indexOf(productId);
-    if (index === -1) {
-      return res.status(404).json({ message: 'Product not in wishlist' });
-    }
-
-    user.wishlist.splice(index, 1);
-    await user.save();
-    res.status(200).json({ message: 'Product removed from wishlist' });
+    const user = req.user;
+    res.status(200).json({ wishlist: user.wishlist });
   } catch (error) {
-    console.error('Error removing from wishlist:', error);
+    console.error('Error fetching wishlist:', error);
     res.status(500).json({ message: 'Internal server error' });
   }
 }
