@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { protectiveRoute } from '../middleware/auth.middleware.js';
+import { protectRoute } from '../middleware/auth.middleware.js';
 import {
   createReview,
   getProductReviews,
@@ -8,10 +8,11 @@ import {
 
 const router = Router();
 
-router.post('/', protectiveRoute, createReview);
+router.post('/', protectRoute, createReview);
 
 router.get('/product/:productId', getProductReviews);
-
-router.delete('/:id', protectiveRoute, deleteReview);
+// we did not implement this function in the mobile app - in the frontend
+// but jic if you'd like the see the backend code here it is - i provided this.
+router.delete('/:reviewId', protectRoute, deleteReview);
 
 export default router;
