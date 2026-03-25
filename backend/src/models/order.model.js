@@ -27,34 +27,50 @@ const orderItemSchema = new mongoose.Schema({
 
 const orderSchema = new mongoose.Schema(
   {
-    userId: {
+    user: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
       required: true,
     },
-    clerkId: { type: String, required: true, unique: true },
-    items: [orderItemSchema],
+
+    clerkId: {
+      type: String,
+      required: true,
+      unique: true,
+    },
+
+    orderItems: {
+      type: [orderItemSchema],
+      required: true,
+    },
+
     shippingAddress: {
       type: shippingAddressSchema,
       required: true,
     },
-    payment: {
-      method: { type: String, required: true },
-      paymentResult: {
-        id: { type: String },
-        status: { type: String },
-        update_time: { type: String },
-        email_address: { type: String },
-      },
-      totalPrice: { type: Number, required: true, min: 0 },
-      status: {
-        type: String,
-        enum: ['pending', 'shipped', 'delivered', 'cancelled'],
-        default: 'pending',
-      },
-      deliveredAt: { type: Date },
-      shippedAt: { type: Date },
+
+    paymentResult: {
+      id: String,
+      status: String,
+      update_time: String,
+      email_address: String,
     },
+
+    totalPrice: {
+      type: Number,
+      required: true,
+      min: 0,
+    },
+
+    // Optional but useful order tracking
+    status: {
+      type: String,
+      enum: ['pending', 'shipped', 'delivered', 'cancelled'],
+      default: 'pending',
+    },
+
+    deliveredAt: Date,
+    shippedAt: Date,
   },
   { timestamps: true }
 );

@@ -1,15 +1,9 @@
 import Router from 'express';
+import { protectRoute } from '../middleware/auth.middleware.js';
+import { createOrder, getUserOrders } from '../controllers/order.controller.js';
 const router = Router();
 
-export default router;
-
-import { protectRoute } from '../middleware/auth.middleware.js';
-import {
-  createOrder,
-  getAllOrders,
-  getOrderById,
-} from '../controllers/order.controller.js';
-
 router.post('/', protectRoute, createOrder);
-router.get('/', protectRoute, getAllOrders);
-router.get('/:id', protectRoute, getOrderById);
+router.get('/', protectRoute, getUserOrders);
+
+export default router;

@@ -1,5 +1,5 @@
 //use express async handler to catch errors sometime not now
-import { User } from '../models/user.model.js';
+import User from '../models/user.model.js';
 export async function addAddress(req, res) {
   try {
     const {
