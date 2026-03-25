@@ -4,6 +4,9 @@ import {
   getAddresses,
   updateAddress,
   deleteAddress,
+  addToWishlist,
+  getWishlist,
+  removeFromWishlist,
 } from '../controllers/user.controller.js';
 
 import { protectRoute } from '../middleware/auth.middleware.js';

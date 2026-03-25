@@ -12,35 +12,55 @@ export async function createOrder(req, res) {
       return res.status(400).json({ message: 'No order items provided' });
     }
 
-    // Validate products and stock
+    // Recalculate total price server-side
+    let serverTotal = 0;
     for (const item of orderItems) {
-      const product = await Product.findById(item.product._id);
-      if (!product) {
-        return res
-          .status(404)
-          .json({ message: `Product ${item.name} not found` });
-      }
-      if (product.stock < item.quantity) {
-        return res
-          .status(400)
-          .json({ message: `Not enough stock for product: ${product.name}` });
-      }
+      serverTotal += item.price * item.quantity;
+    }
+    if (serverTotal !== totalPrice) {
+      return res.status(400).json({ message: 'Total price mismatch' });
     }
 
-    const order = await Order.create({
-      user: user._id,
-      clerkId: user.clerkId,
-      orderItems,
-      shippingAddress,
-      paymentResult,
-      totalPrice,
-    });
+    const session = await mongoose.startSession();
+    let order;
+    try {
+      await session.withTransaction(async () => {
+        // Decrement stocks atomically
+        for (const item of orderItems) {
+          const updatedProduct = await Product.findOneAndUpdate(
+            { _id: item.product._id, stock: { $gte: item.quantity } },
+            { $inc: { stock: -item.quantity } },
+            { session }
+          );
+          if (!updatedProduct) {
+            throw new Error(`Not enough stock for product ${item.product._id}`);
+          }
+        }
 
-    // update product stock
-    for (const item of orderItems) {
-      await Product.findByIdAndUpdate(item.product._id, {
-        $inc: { stock: -item.quantity },
+        // Create order
+        const orders = await Order.create(
+          [
+            {
+              user: user._id,
+              clerkId: user.clerkId,
+              orderItems,
+              shippingAddress,
+              paymentResult,
+              totalPrice,
+            },
+          ],
+          { session }
+        );
+        order = orders[0];
       });
+    } catch (error) {
+      await session.endSession();
+      if (error.message.includes('Not enough stock')) {
+        return res.status(400).json({ message: error.message });
+      }
+      throw error;
+    } finally {
+      await session.endSession();
     }
 
     res.status(201).json({ message: 'Order created successfully', order });
@@ -52,11 +72,9 @@ export async function createOrder(req, res) {
 
 export async function getUserOrders(req, res) {
   try {
-    const userId = req.user.id;
     const orders = await Order.find({ clerkId: req.user.clerkId })
       .populate('orderItems.product')
       .sort({ createdAt: -1 });
-    res.status(200).json({ orders });
 
     //check if each order has been reviewed.
     const ordersWithReviewStatus = await Promise.all(
@@ -73,7 +91,6 @@ export async function getUserOrders(req, res) {
     );
 
     res.status(200).json({ orders: ordersWithReviewStatus });
-    1;
   } catch (error) {
     console.error('Error fetching orders:', error);
     res.status(500).json({ message: 'Internal server error' });

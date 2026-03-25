@@ -7,8 +7,8 @@ import {
   updateOrderStatus,
   getAllCustomers,
   getDashboardStats,
+  getAllOrders,
 } from '../controllers/admin.controller.js';
-import { getAllOrders } from '../controllers/order.controller.js';
 import { adminOnly, protectRoute } from '../middleware/auth.middleware.js';
 import upload from '../middleware/multer.middleware.js';
 
