@@ -54,7 +54,6 @@ export async function createOrder(req, res) {
         order = orders[0];
       });
     } catch (error) {
-      await session.endSession();
       if (error.message.includes('Not enough stock')) {
         return res.status(400).json({ message: error.message });
       }
