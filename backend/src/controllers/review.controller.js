@@ -4,11 +4,17 @@ import Product from '../models/product.model.js';
 
 export async function createReview(req, res) {
   try {
-    const { productId, orderId, rating } = req.body;
+    const { productId, orderId, rating, comment } = req.body;
 
     if (!rating || rating < 1 || rating > 5) {
       return res.status(400).json({
         message: 'Invalid rating. Please provide a rating between 1 and 5.',
+      });
+    }
+
+    if (!comment) {
+      return res.status(400).json({
+        message: 'Comment is required.',
       });
     }
 
@@ -33,7 +39,7 @@ export async function createReview(req, res) {
 
     // verify product is in the order.
     const productInOrder = order.orderItems.find(
-      (item) => item.product.toString() === productId.toString()
+      (item) => item.productId && item.productId.toString() === productId.toString()
     );
     if (!productInOrder) {
       return res
@@ -43,9 +49,9 @@ export async function createReview(req, res) {
 
     // check if user already reviewed this product in this order
     const existingReview = await Review.findOne({
-      user: user._id,
-      product: productId,
-      order: orderId,
+      userId: user._id,
+      productId: productId,
+      orderId: orderId,
     });
     if (existingReview) {
       return res.status(400).json({
@@ -54,15 +60,16 @@ export async function createReview(req, res) {
     }
 
     const review = await Review.create({
-      user: user._id,
-      product: productId,
-      order: orderId,
+      userId: user._id,
+      productId: productId,
+      orderId: orderId,
       rating,
+      comment,
     });
 
     //update the product rating
     const product = await Product.findById(productId);
-    const reviews = await Review.find({ product: productId });
+    const reviews = await Review.find({ productId: productId });
     const totalRating = reviews.reduce((sum, r) => sum + r.rating, 0);
     product.averageRating = totalRating / reviews.length;
     product.totalReviews = reviews.length;
@@ -86,14 +93,14 @@ export async function deleteReview(req, res) {
       return res.status(404).json({ message: 'Review not found' });
     }
 
-    if (review.user.toString() !== user._id.toString()) {
+    if (review.userId.toString() !== user._id.toString()) {
       return res
         .status(403)
         .json({ message: 'You are not the owner of this review' });
     }
 
     const productId = review.productId;
-    await Review.fimdByIdAndDelete(reviewId);
+    await Review.findByIdAndDelete(reviewId);
 
     //update the product rating
     const reviews = await Review.find({ productId });
