@@ -12,8 +12,15 @@ export async function createReview(req, res) {
       });
     }
 
+<<<<<<< HEAD
     if (!comment || comment.trim() === '') {
       return res.status(400).json({ message: 'Comment is required.' });
+=======
+    if (!comment) {
+      return res.status(400).json({
+        message: 'Comment is required.',
+      });
+>>>>>>> 42ab8ba2f5b958b46f38d008967a79df6a620ee2
     }
 
     const user = req.user;
@@ -36,10 +43,16 @@ export async function createReview(req, res) {
     }
 
     // verify product is in the order.
+<<<<<<< HEAD
     const productInOrder = order.orderItems.find((item) => {
       if (!item.productId) return false;
       return item.productId.toString() === productId.toString();
     });
+=======
+    const productInOrder = order.orderItems.find(
+      (item) => item.productId && item.productId.toString() === productId.toString()
+    );
+>>>>>>> 42ab8ba2f5b958b46f38d008967a79df6a620ee2
     if (!productInOrder) {
       return res
         .status(400)
@@ -49,8 +62,13 @@ export async function createReview(req, res) {
     // check if user already reviewed this product in this order
     const existingReview = await Review.findOne({
       userId: user._id,
+<<<<<<< HEAD
       productId,
       orderId,
+=======
+      productId: productId,
+      orderId: orderId,
+>>>>>>> 42ab8ba2f5b958b46f38d008967a79df6a620ee2
     });
     if (existingReview) {
       return res.status(400).json({
@@ -60,19 +78,28 @@ export async function createReview(req, res) {
 
     const review = await Review.create({
       userId: user._id,
+<<<<<<< HEAD
       productId,
       orderId,
+=======
+      productId: productId,
+      orderId: orderId,
+>>>>>>> 42ab8ba2f5b958b46f38d008967a79df6a620ee2
       rating,
       comment,
     });
 
     //update the product rating
     const product = await Product.findById(productId);
+<<<<<<< HEAD
     if (!product) {
       return res.status(404).json({ message: 'Product not found' });
     }
 
     const reviews = await Review.find({ product: productId });
+=======
+    const reviews = await Review.find({ productId: productId });
+>>>>>>> 42ab8ba2f5b958b46f38d008967a79df6a620ee2
     const totalRating = reviews.reduce((sum, r) => sum + r.rating, 0);
     product.averageRating =
       reviews.length > 0 ? totalRating / reviews.length : 0;
