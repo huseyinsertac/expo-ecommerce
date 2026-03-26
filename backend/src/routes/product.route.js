@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { protectRoute } from '../middleware/auth.middleware';
-import { get } from 'mongoose';
+import { getAllProducts } from '../controllers/admin.controller.js';
+import { getProductById } from '../controllers/product.controller.js';
 
 const router = Router();
 
