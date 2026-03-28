@@ -20,6 +20,10 @@ const __dirname = path.resolve();
 
 app.use(express.json());
 
+if (!ENV.CLIENT_URL) {
+  throw new Error('CLIENT_URL environment variable is required');
+}
+
 app.use(cors({ origin: ENV.CLIENT_URL, credentials: true }));
 
 app.use(clerkMiddleware());
