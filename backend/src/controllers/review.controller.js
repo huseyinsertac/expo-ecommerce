@@ -6,7 +6,7 @@ export async function createReview(req, res) {
   try {
     const { productId, orderId, rating, comment } = req.body;
 
-    if (!rating || rating < 1 || rating > 5) {
+    if (typeof rating !== 'number' || rating < 1 || rating > 5) {
       return res.status(400).json({
         message: 'Invalid rating. Please provide a rating between 1 and 5.',
       });
@@ -39,7 +39,8 @@ export async function createReview(req, res) {
 
     // verify product is in the order.
     const productInOrder = order.orderItems.find(
-      (item) => item.productId && item.productId.toString() === productId.toString()
+      (item) =>
+        item.productId && item.productId.toString() === String(productId)
     );
     if (!productInOrder) {
       return res
@@ -67,13 +68,22 @@ export async function createReview(req, res) {
       comment,
     });
 
-    //update the product rating
-    const product = await Product.findById(productId);
-    const reviews = await Review.find({ productId: productId });
+    //update the product rating with atomic aggregation to avoid race conditions
+    const reviews = await Review.find({ productId });
     const totalRating = reviews.reduce((sum, r) => sum + r.rating, 0);
-    product.averageRating = totalRating / reviews.length;
-    product.totalReviews = reviews.length;
-    await product.save();
+    const updatedProduct = await Product.findByIdAndUpdate(
+      productId,
+      {
+        averageRating: totalRating / reviews.length,
+        totalReviews: reviews.length,
+      },
+      { new: true, runValidators: true }
+    );
+
+    if (!updatedProduct) {
+      await Review.findByIdAndDelete(review._id);
+      return res.status(404).json({ message: 'Product not found' });
+    }
 
     res.status(201).json({ message: 'Review submitted successfully', review });
   } catch (error) {
