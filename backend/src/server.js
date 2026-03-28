@@ -19,6 +19,9 @@ const app = express();
 const __dirname = path.resolve();
 
 app.use(express.json());
+
+app.use(cors({ origin: ENV.CLIENT_URL, credentials: true }));
+
 app.use(clerkMiddleware());
 
 app.use('/api/inngest', serve({ client: inngest, functions }));
@@ -34,8 +37,6 @@ app.use('/api/reviews', reviewRoutes);
 app.use('/api/products', productRoutes);
 
 app.use('/api/cart', cartRoutes);
-
-app.use(cors({ origin: ENV.CLIENT_URL, credentials: true }));
 
 app.get('/api/health', (req, res) => {
   res.status(200).json({ message: 'Success' });

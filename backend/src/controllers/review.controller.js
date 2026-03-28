@@ -1,8 +1,10 @@
+import mongoose from 'mongoose';
 import Order from '../models/order.model.js';
 import Review from '../models/review.model.js';
 import Product from '../models/product.model.js';
 
 export async function createReview(req, res) {
+  const session = await mongoose.startSession();
   try {
     const { productId, orderId, rating, comment } = req.body;
 
@@ -60,39 +62,67 @@ export async function createReview(req, res) {
       });
     }
 
-    const review = await Review.create({
-      userId: user._id,
-      productId: productId,
-      orderId: orderId,
-      rating,
-      comment,
+    // Use transaction to ensure atomicity of review creation and product update
+    await session.withTransaction(async () => {
+      const [review] = await Review.create(
+        [
+          {
+            userId: user._id,
+            productId: productId,
+            orderId: orderId,
+            rating,
+            comment,
+          },
+        ],
+        { session }
+      );
+
+      // Update product using aggregation pipeline for atomic increment/calculation
+      // Assumes Product model has totalRating field; if not, use $set with recalculation
+      const updatedProduct = await Product.findByIdAndUpdate(
+        productId,
+        [
+          {
+            $set: {
+              totalRating: { $add: ['$totalRating', rating] },
+              totalReviews: { $add: ['$totalReviews', 1] },
+            },
+          },
+          {
+            $set: {
+              averageRating: {
+                $cond: [
+                  { $eq: ['$totalReviews', 0] },
+                  0,
+                  { $divide: ['$totalRating', '$totalReviews'] },
+                ],
+              },
+            },
+          },
+        ],
+        { new: true, runValidators: true, session }
+      );
+
+      if (!updatedProduct) {
+        throw new Error('Product not found');
+      }
+
+      return review;
     });
 
-    //update the product rating with atomic aggregation to avoid race conditions
-    const reviews = await Review.find({ productId });
-    const totalRating = reviews.reduce((sum, r) => sum + r.rating, 0);
-    const updatedProduct = await Product.findByIdAndUpdate(
-      productId,
-      {
-        averageRating: totalRating / reviews.length,
-        totalReviews: reviews.length,
-      },
-      { new: true, runValidators: true }
-    );
-
-    if (!updatedProduct) {
-      await Review.findByIdAndDelete(review._id);
-      return res.status(404).json({ message: 'Product not found' });
-    }
-
-    res.status(201).json({ message: 'Review submitted successfully', review });
+    res.status(201).json({
+      message: 'Review submitted successfully',
+    });
   } catch (error) {
     console.error('Error creating review:', error);
     res.status(500).json({ message: 'Internal server error' });
+  } finally {
+    await session.endSession();
   }
 }
 
 export async function deleteReview(req, res) {
+  const session = await mongoose.startSession();
   try {
     const { reviewId } = req.params;
 
@@ -110,19 +140,46 @@ export async function deleteReview(req, res) {
     }
 
     const productId = review.productId;
-    await Review.findByIdAndDelete(reviewId);
+    const ratingToRemove = review.rating;
 
-    //update the product rating
-    const reviews = await Review.find({ productId });
-    const totalRating = reviews.reduce((sum, r) => sum + r.rating, 0);
-    await Product.findByIdAndUpdate(productId, {
-      averageRating: reviews.length > 0 ? totalRating / reviews.length : 0,
-      totalReviews: reviews.length,
+    // Use transaction to ensure atomicity of review deletion and product update
+    await session.withTransaction(async () => {
+      await Review.findByIdAndDelete(reviewId, { session });
+
+      // Update product using aggregation pipeline for atomic decrement/calculation
+      // Assumes Product model has totalRating field
+      await Product.findByIdAndUpdate(
+        productId,
+        [
+          {
+            $set: {
+              totalRating: {
+                $max: [{ $subtract: ['$totalRating', ratingToRemove] }, 0],
+              },
+              totalReviews: { $max: [{ $subtract: ['$totalReviews', 1] }, 0] },
+            },
+          },
+          {
+            $set: {
+              averageRating: {
+                $cond: [
+                  { $eq: ['$totalReviews', 0] },
+                  0,
+                  { $divide: ['$totalRating', '$totalReviews'] },
+                ],
+              },
+            },
+          },
+        ],
+        { session }
+      );
     });
 
     res.status(200).json({ message: 'Review deleted successfully' });
   } catch (error) {
     console.error('Error deleting review:', error);
     res.status(500).json({ message: 'Internal server error' });
+  } finally {
+    await session.endSession();
   }
 }
