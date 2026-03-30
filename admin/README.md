@@ -1,16 +1,58 @@
-# React + Vite
+# Admin Dashboard
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+This is a React + Vite admin dashboard for managing products, orders, customers, and stats.
 
-Currently, two official plugins are available:
+## Setup
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+### Environment Configuration
 
-## React Compiler
+The admin dashboard requires the `VITE_API_URL` environment variable to be configured for communicating with the backend API.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+1. **Copy the example environment file:**
 
-## Expanding the ESLint configuration
+   ```bash
+   cp .env.example .env
+   ```
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+2. **Update `.env` with your API URL:**
+
+   ```
+   VITE_API_URL=http://localhost:3000
+   ```
+
+   - For local development: Use `http://localhost:3000` (or your local backend URL)
+   - For production: Use your production API URL
+
+### About VITE\_ Prefix
+
+Environment variables prefixed with `VITE_` are automatically exposed to your client-side code during the build process. These are safe to expose as they're replaced at build time. Do not use `VITE_` prefix for sensitive secrets.
+
+### Axios Configuration
+
+The axios instance in `src/lib/axios.js` uses `import.meta.env.VITE_API_URL` as the base URL for all API requests. The instance includes `withCredentials: true` to support cookie-based authentication.
+
+If `VITE_API_URL` is not set:
+
+- Development: Requests will fail with an undefined baseURL
+- Production: Build will include an undefined baseURL
+
+## Development
+
+```bash
+npm install
+npm run dev
+```
+
+## Build
+
+```bash
+npm run build
+```
+
+## Features
+
+- React Router for navigation
+- TanStack React Query for API calls
+- Clerk for authentication
+- DaisyUI for styling
+- Lucide icons
