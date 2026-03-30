@@ -34,7 +34,6 @@ export const NAVIGATION = [
 
 function Navbar() {
   const location = useLocation();
-  console.log('Navbar rendered - current path:', location.pathname);
   return (
     <div className="navbar w-full bg-base-300">
       <label

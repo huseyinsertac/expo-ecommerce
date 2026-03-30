@@ -52,10 +52,22 @@ export const productApi = {
   getAll: async () => {
     throw new Error('Use useAuthenticatedApi hook instead');
   },
+  create: async () => {
+    throw new Error('Use useAuthenticatedApi hook instead');
+  },
+  update: async () => {
+    throw new Error('Use useAuthenticatedApi hook instead');
+  },
+  delete: async () => {
+    throw new Error('Use useAuthenticatedApi hook instead');
+  },
 };
 
 export const orderApi = {
   getAll: async () => {
+    throw new Error('Use useAuthenticatedApi hook instead');
+  },
+  updateStatus: async () => {
     throw new Error('Use useAuthenticatedApi hook instead');
   },
 };

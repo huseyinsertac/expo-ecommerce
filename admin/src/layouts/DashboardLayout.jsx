@@ -4,12 +4,7 @@ import Sidebar from '../components/Sidebar';
 function DashboardLayout() {
   return (
     <div className="drawer lg:drawer-open">
-      <input
-        id="my-drawer"
-        type="checkbox"
-        className="drawer-toggle"
-        defaultChecked
-      />
+      <input id="my-drawer" type="checkbox" className="drawer-toggle" />
       <div className="drawer-content">
         <Navbar />
         <main className="p-6">

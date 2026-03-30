@@ -31,7 +31,11 @@ function DashboardPage() {
     queryFn: orderApi.getAll,
   });
 
-  const { data: statsData, isLoading: statsLoading } = useQuery({
+  const {
+    data: statsData,
+    isLoading: statsLoading,
+    error: statsError,
+  } = useQuery({
     queryKey: ['dashboardStats'],
     queryFn: statsApi.getDashboard,
   });
@@ -44,22 +48,36 @@ function DashboardPage() {
       title: 'Total Revenue',
       value: statsLoading
         ? 'Loading...'
-        : `$${statsData?.totalRevenue?.toFixed(2) || 0}`,
+        : statsError
+          ? 'Error'
+          : `$${statsData?.totalRevenue?.toFixed(2) || 0}`,
       icon: <DollarSignIcon className="size-8" />,
     },
     {
       title: 'Total Orders',
-      value: statsLoading ? 'Loading...' : statsData?.totalOrders,
+      value: statsLoading
+        ? 'Loading...'
+        : statsError
+          ? 'Error'
+          : statsData?.totalOrders,
       icon: <ShoppingBag className="size-8" />,
     },
     {
       title: 'Total Customers',
-      value: statsLoading ? 'Loading...' : statsData?.totalCustomers,
+      value: statsLoading
+        ? 'Loading...'
+        : statsError
+          ? 'Error'
+          : statsData?.totalCustomers,
       icon: <UsersIcon className="size-8" />,
     },
     {
       title: 'Total Products',
-      value: statsLoading ? 'Loading...' : statsData?.totalProducts,
+      value: statsLoading
+        ? 'Loading...'
+        : statsError
+          ? 'Error'
+          : statsData?.totalProducts,
       icon: <PackageIcon className="size-8" />,
     },
   ];
@@ -76,8 +94,8 @@ function DashboardPage() {
     );
   }
 
-  if (error) {
-    return <div>Error: {error.message}</div>;
+  if (error || statsError) {
+    return <div>Error: {error?.message || statsError?.message}</div>;
   }
   return (
     <div className="space-y-6">

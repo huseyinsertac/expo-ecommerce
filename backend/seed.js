@@ -6,6 +6,25 @@ import Order from './src/models/order.model.js';
 
 const seedDatabase = async () => {
   try {
+    // Safety guard: prevent accidental data wipe
+    const isProduction = process.env.NODE_ENV === 'production';
+    const hasConfirmation = process.env.SEED_CONFIRM === 'true';
+    const hasForceFlag = process.argv.includes('--force');
+
+    if (isProduction && !hasForceFlag) {
+      console.error(
+        'ERROR: Seeding is not allowed in production without --force flag'
+      );
+      process.exit(1);
+    }
+
+    if (!hasConfirmation && !hasForceFlag) {
+      console.error(
+        'ERROR: Seeding requires either SEED_CONFIRM=true environment variable or --force CLI flag'
+      );
+      process.exit(1);
+    }
+
     await mongoose.connect(ENV.DB_URL);
     console.log('Connected to MongoDB for seeding');
 

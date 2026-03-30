@@ -22,6 +22,7 @@ const userSchema = new mongoose.Schema(
     name: { type: String },
     imageUrl: { type: String, default: '' },
     clerkId: { type: String, required: true, unique: true },
+    role: { type: String, enum: ['customer', 'admin'], default: 'customer' },
     addresses: [addressSchema],
     wishlist: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Product' }],
   },

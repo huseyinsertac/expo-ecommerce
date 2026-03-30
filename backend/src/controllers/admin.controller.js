@@ -175,7 +175,7 @@ export async function getDashboardStats(_, res) {
     res.status(200).json({
       totalRevenue: totalRevenue[0] ? totalRevenue[0].revenue : 0,
       totalOrders,
-      totalCustomers: await User.countDocuments(),
+      totalCustomers: await User.countDocuments({ role: 'customer' }),
       totalProducts,
     });
   } catch (error) {
