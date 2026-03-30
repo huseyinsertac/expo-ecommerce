@@ -95,7 +95,7 @@ export async function getAllOrders(_, res) {
   try {
     const orders = await Order.find()
       .populate('user', 'name email')
-      .populate('items.productId', 'name price')
+      .populate('orderItems.productId', 'name price')
       .sort({ createdAt: -1 });
     res.status(200).json({ orders });
   } catch (error) {
@@ -161,11 +161,13 @@ export async function getDashboardStats(_, res) {
     const totalOrders = await Order.countDocuments();
     const totalRevenue = await Order.aggregate([
       { $match: { status: 'delivered' } },
-      { $unwind: '$items' },
+      { $unwind: '$orderItems' },
       {
         $group: {
           _id: null,
-          revenue: { $sum: { $multiply: ['$items.quantity', '$items.price'] } },
+          revenue: {
+            $sum: { $multiply: ['$orderItems.quantity', '$orderItems.price'] },
+          },
         },
       },
     ]);
@@ -173,7 +175,7 @@ export async function getDashboardStats(_, res) {
     res.status(200).json({
       totalRevenue: totalRevenue[0] ? totalRevenue[0].revenue : 0,
       totalOrders,
-      totalCustomers: await User.countDocuments({ role: 'customer' }),
+      totalCustomers: await User.countDocuments(),
       totalProducts,
     });
   } catch (error) {
