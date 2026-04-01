@@ -73,7 +73,14 @@ export async function updateProduct(req, res) {
 
 export async function deleteProduct(req, res) {
   try {
-    // Your logic to delete a product here
+    const { id } = req.params;
+
+    const deletedProduct = await Product.findByIdAndDelete(id);
+
+    if (!deletedProduct) {
+      return res.status(404).json({ message: 'Product not found' });
+    }
+
     res.status(200).json({ message: 'Product deleted successfully' });
   } catch (error) {
     console.error('Error in deleteProduct:', error);
@@ -210,7 +217,7 @@ export async function createProduct(req, res) {
             if (error) {
               reject(error);
             } else {
-              resolve(result.secure_url);
+              resolve(result);
             }
           }
         );
@@ -219,9 +226,22 @@ export async function createProduct(req, res) {
 
     const uploadResults = await Promise.all(uploadPromises);
 
-    const imageUrls = uploadResults.map((result) => result.secure_url);
+    const imageUrls = uploadResults
+      .map((result) => result?.secure_url || result?.url)
+      .filter(Boolean);
 
-    const product = await Product.createProduct({
+    if (imageUrls.length !== req.files.length) {
+      console.error('Cloudinary upload mismatch', {
+        reqFiles: req.files,
+        uploadResults,
+        imageUrls,
+      });
+      return res.status(500).json({
+        message: 'Image upload failed, please try again',
+      });
+    }
+
+    const product = await Product.create({
       name,
       description,
       price,
