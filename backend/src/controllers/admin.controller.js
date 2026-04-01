@@ -42,6 +42,24 @@ export async function updateProduct(req, res) {
         return res.status(400).json({ message: 'Maximum 3 images allowed' });
       }
 
+      // Delete old images from Cloudinary
+      if (updatedProduct.images && updatedProduct.images.length > 0) {
+        const deletePromises = updatedProduct.images.map((image) => {
+          return new Promise((resolve) => {
+            cloudinary.uploader.destroy(image.public_id, (error) => {
+              if (error) {
+                console.error(
+                  `Failed to delete image ${image.public_id}:`,
+                  error
+                );
+              }
+              resolve();
+            });
+          });
+        });
+        await Promise.all(deletePromises);
+      }
+
       const uploadPromises = req.files.map((file) => {
         return new Promise((resolve, reject) => {
           cloudinary.uploader.upload(
@@ -51,7 +69,7 @@ export async function updateProduct(req, res) {
               if (error) {
                 reject(error);
               } else {
-                resolve(result.secure_url);
+                resolve(result);
               }
             }
           );
@@ -60,7 +78,12 @@ export async function updateProduct(req, res) {
 
       const uploadResults = await Promise.all(uploadPromises);
 
-      updatedProduct.images = uploadResults;
+      const imageObjects = uploadResults.map((result) => ({
+        url: result.secure_url || result.url,
+        public_id: result.public_id,
+      }));
+
+      updatedProduct.images = imageObjects;
       await updatedProduct.save();
     }
 
@@ -79,6 +102,24 @@ export async function deleteProduct(req, res) {
 
     if (!deletedProduct) {
       return res.status(404).json({ message: 'Product not found' });
+    }
+
+    // Delete all images from Cloudinary
+    if (deletedProduct.images && deletedProduct.images.length > 0) {
+      const deletePromises = deletedProduct.images.map((image) => {
+        return new Promise((resolve) => {
+          cloudinary.uploader.destroy(image.public_id, (error) => {
+            if (error) {
+              console.error(
+                `Failed to delete image ${image.public_id}:`,
+                error
+              );
+            }
+            resolve();
+          });
+        });
+      });
+      await Promise.all(deletePromises);
     }
 
     res.status(200).json({ message: 'Product deleted successfully' });
@@ -102,7 +143,10 @@ export async function getAllOrders(_, res) {
   try {
     const orders = await Order.find()
       .populate('user', 'name email')
-      .populate('orderItems.productId', 'name price')
+      .populate({
+        path: 'orderItems.productId',
+        select: 'name price',
+      })
       .sort({ createdAt: -1 });
     res.status(200).json({ orders });
   } catch (error) {
@@ -226,15 +270,16 @@ export async function createProduct(req, res) {
 
     const uploadResults = await Promise.all(uploadPromises);
 
-    const imageUrls = uploadResults
-      .map((result) => result?.secure_url || result?.url)
-      .filter(Boolean);
+    const imageObjects = uploadResults.map((result) => ({
+      url: result.secure_url || result.url,
+      public_id: result.public_id,
+    }));
 
-    if (imageUrls.length !== req.files.length) {
+    if (imageObjects.length !== req.files.length) {
       console.error('Cloudinary upload mismatch', {
         reqFiles: req.files,
         uploadResults,
-        imageUrls,
+        imageObjects,
       });
       return res.status(500).json({
         message: 'Image upload failed, please try again',
@@ -247,7 +292,7 @@ export async function createProduct(req, res) {
       price,
       stock,
       category,
-      images: imageUrls,
+      images: imageObjects,
     });
 
     res.status(201).json(product);

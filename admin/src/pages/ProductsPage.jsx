@@ -14,6 +14,7 @@ function ProductsPage() {
   const { productApi } = useAuthenticatedApi();
   const [showModal, setShowModal] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
+  const [deletingProductId, setDeletingProductId] = useState(null);
   const [formData, setFormData] = useState({
     name: '',
     category: '',
@@ -63,9 +64,15 @@ function ProductsPage() {
 
   const deleteProductMutation = useMutation({
     mutationFn: productApi.delete,
+    onMutate: (productId) => {
+      setDeletingProductId(productId);
+    },
     onSuccess: () => {
       closeModal();
       queryClient.invalidateQueries({ queryKey: ['products'] });
+    },
+    onSettled: () => {
+      setDeletingProductId(null);
     },
   });
 
@@ -162,8 +169,10 @@ function ProductsPage() {
                     <div className="w-20 rounded-xl">
                       <img
                         src={
-                          product.images?.[0] ||
-                          'https://via.placeholder.com/80x80?text=No+Image'
+                          typeof product.images?.[0] === 'string'
+                            ? product.images[0]
+                            : product.images?.[0]?.url ||
+                              'https://via.placeholder.com/80x80?text=No+Image'
                         }
                         alt={product.name}
                       />
@@ -206,8 +215,9 @@ function ProductsPage() {
                     <button
                       className="btn btn-square btn-ghost text-error"
                       onClick={() => deleteProductMutation.mutate(product._id)}
+                      disabled={deletingProductId === product._id}
                     >
-                      {deleteProductMutation.isPending ? (
+                      {deletingProductId === product._id ? (
                         <span className="loading loading-spinner"></span>
                       ) : (
                         <Trash2Icon className="w-5 h-5" />
@@ -271,6 +281,7 @@ function ProductsPage() {
                     <option value="Accessories">Accessories</option>
                     <option value="Fashion">Fashion</option>
                     <option value="Sports">Sports</option>
+                    <option value="Books">Books</option>
                   </select>
                 </div>
               </div>

@@ -145,6 +145,16 @@ const products = [
   },
 ];
 
+const formattedProducts = products.map((product) => ({
+  ...product,
+  images: product.images.map((img, index) => ({
+    url: img,
+    public_id: `seed_${product.name
+      .toLowerCase()
+      .replace(/\s+/g, '_')}_${index}`,
+  })),
+}));
+
 const seedDatabase = async () => {
   try {
     // Connect to MongoDB
@@ -156,8 +166,8 @@ const seedDatabase = async () => {
     console.log('🗑️  Cleared existing products');
 
     // Insert seed products
-    await Product.insertMany(products);
-    console.log(`✅ Successfully seeded ${products.length} products`);
+    await Product.insertMany(formattedProducts);
+    console.log(`✅ Successfully seeded ${formattedProducts.length} products`);
 
     // Display summary
     const categories = [...new Set(products.map((p) => p.category))];
