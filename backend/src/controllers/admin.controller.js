@@ -2,6 +2,7 @@ import cloudinary from '../config/cloudinary.js';
 import Product from '../models/product.model.js';
 import Order from '../models/order.model.js';
 import User from '../models/user.model.js';
+import fs from 'fs/promises';
 export async function adminController(req, res) {
   try {
     // Your admin logic here
@@ -42,6 +43,24 @@ export async function updateProduct(req, res) {
         return res.status(400).json({ message: 'Maximum 3 images allowed' });
       }
 
+      // Delete old images from Cloudinary
+      if (updatedProduct.images && updatedProduct.images.length > 0) {
+        const deletePromises = updatedProduct.images.map((image) => {
+          return new Promise((resolve) => {
+            cloudinary.uploader.destroy(image.public_id, (error) => {
+              if (error) {
+                console.error(
+                  `Failed to delete image ${image.public_id}:`,
+                  error
+                );
+              }
+              resolve();
+            });
+          });
+        });
+        await Promise.all(deletePromises);
+      }
+
       const uploadPromises = req.files.map((file) => {
         return new Promise((resolve, reject) => {
           cloudinary.uploader.upload(
@@ -51,7 +70,7 @@ export async function updateProduct(req, res) {
               if (error) {
                 reject(error);
               } else {
-                resolve(result.secure_url);
+                resolve(result);
               }
             }
           );
@@ -60,7 +79,12 @@ export async function updateProduct(req, res) {
 
       const uploadResults = await Promise.all(uploadPromises);
 
-      updatedProduct.images = uploadResults;
+      const imageObjects = uploadResults.map((result) => ({
+        url: result.secure_url || result.url,
+        public_id: result.public_id,
+      }));
+
+      updatedProduct.images = imageObjects;
       await updatedProduct.save();
     }
 
@@ -73,7 +97,32 @@ export async function updateProduct(req, res) {
 
 export async function deleteProduct(req, res) {
   try {
-    // Your logic to delete a product here
+    const { id } = req.params;
+
+    const deletedProduct = await Product.findByIdAndDelete(id);
+
+    if (!deletedProduct) {
+      return res.status(404).json({ message: 'Product not found' });
+    }
+
+    // Delete all images from Cloudinary
+    if (deletedProduct.images && deletedProduct.images.length > 0) {
+      const deletePromises = deletedProduct.images.map((image) => {
+        return new Promise((resolve) => {
+          cloudinary.uploader.destroy(image.public_id, (error) => {
+            if (error) {
+              console.error(
+                `Failed to delete image ${image.public_id}:`,
+                error
+              );
+            }
+            resolve();
+          });
+        });
+      });
+      await Promise.all(deletePromises);
+    }
+
     res.status(200).json({ message: 'Product deleted successfully' });
   } catch (error) {
     console.error('Error in deleteProduct:', error);
@@ -86,7 +135,7 @@ export async function getAllProducts(_, res) {
     const products = await Product.find().sort({ createdAt: -1 });
     res.status(200).json(products);
   } catch (error) {
-    console.error('Error fetching productsz:', error);
+    console.error('Error fetching products:', error);
     res.status(500).json({ message: 'Internal server error' });
   }
 }
@@ -95,7 +144,10 @@ export async function getAllOrders(_, res) {
   try {
     const orders = await Order.find()
       .populate('user', 'name email')
-      .populate('orderItems.productId', 'name price')
+      .populate({
+        path: 'orderItems.productId',
+        select: 'name price',
+      })
       .sort({ createdAt: -1 });
     res.status(200).json({ orders });
   } catch (error) {
@@ -203,14 +255,21 @@ export async function createProduct(req, res) {
 
     const uploadPromises = req.files.map((file) => {
       return new Promise((resolve, reject) => {
+        console.log('Uploading file to Cloudinary:', file.filename);
         cloudinary.uploader.upload(
           file.path,
           { folder: 'products' },
           (error, result) => {
             if (error) {
+              console.error('Cloudinary upload error:', error);
               reject(error);
             } else {
-              resolve(result.secure_url);
+              console.log(
+                'Cloudinary upload success:',
+                result.public_id,
+                result.secure_url
+              );
+              resolve(result);
             }
           }
         );
@@ -218,21 +277,51 @@ export async function createProduct(req, res) {
     });
 
     const uploadResults = await Promise.all(uploadPromises);
+    console.log('All uploads completed. Total:', uploadResults.length);
 
-    const imageUrls = uploadResults.map((result) => result.secure_url);
+    // Clean up local files after successful upload
+    await Promise.all(
+      req.files.map((file) =>
+        fs
+          .unlink(file.path)
+          .catch((err) =>
+            console.error(`Failed to delete local file ${file.path}:`, err)
+          )
+      )
+    );
 
-    const product = await Product.createProduct({
+    const imageObjects = uploadResults.map((result) => ({
+      url: result.secure_url || result.url,
+      public_id: result.public_id,
+    }));
+    console.log('Image objects created:', imageObjects);
+
+    if (imageObjects.length !== req.files.length) {
+      console.error('Cloudinary upload mismatch', {
+        reqFiles: req.files,
+        uploadResults,
+        imageObjects,
+      });
+      return res.status(500).json({
+        message: 'Image upload failed, please try again',
+      });
+    }
+
+    const product = await Product.create({
       name,
       description,
       price,
       stock,
       category,
-      images: imageUrls,
+      images: imageObjects,
     });
 
+    console.log('Product created with images:', product.images);
     res.status(201).json(product);
   } catch (error) {
     console.error('Error in creating product:', error);
-    res.status(500).json({ message: 'Internal server error' });
+    res
+      .status(500)
+      .json({ message: 'Internal server error', error: error.message });
   }
 }
