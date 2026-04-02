@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuthenticatedApi } from '../lib/api';
-import { getStockStatusBadge } from '../lib/utils';
+import { getStockStatusBadge, getProductImageUrl } from '../lib/utils';
 
 function ProductsPage() {
   const { productApi } = useAuthenticatedApi();
@@ -87,6 +87,14 @@ function ProductsPage() {
       description: '',
     });
     setImages([]);
+    +(
+      // Revoke blob URLs before clearing
+      imagePreviews.forEach((preview) => {
+        if (typeof preview === 'string' && preview.startsWith('blob:')) {
+          URL.revokeObjectURL(preview);
+        }
+      })
+    );
     setImagePreviews([]);
   };
 
@@ -99,7 +107,7 @@ function ProductsPage() {
       stock: product.stock.toString(),
       description: product.description,
     });
-    setImagePreviews(product.images || []);
+    setImagePreviews((product.images || []).map((img) => img.url));
     setShowModal(true);
   };
 
@@ -107,6 +115,12 @@ function ProductsPage() {
     const files = Array.from(e.target.files);
     if (files.length > 3) return alert('You can upload up to 3 images only.');
     setImages(files);
+    // Revoke old blob URLs to prevent memory leaks
+    imagePreviews.forEach((preview) => {
+      if (typeof preview === 'string' && preview.startsWith('blob:')) {
+        URL.revokeObjectURL(preview);
+      }
+    });
     const previews = files.map((file) => URL.createObjectURL(file));
     setImagePreviews(previews);
   };
@@ -168,12 +182,7 @@ function ProductsPage() {
                   <div className="avatar">
                     <div className="w-20 rounded-xl">
                       <img
-                        src={
-                          typeof product.images?.[0] === 'string'
-                            ? product.images[0]
-                            : product.images?.[0]?.url ||
-                              'https://via.placeholder.com/80x80?text=No+Image'
-                        }
+                        src={getProductImageUrl(product)}
                         alt={product.name}
                       />
                     </div>

@@ -254,13 +254,20 @@ export async function createProduct(req, res) {
 
     const uploadPromises = req.files.map((file) => {
       return new Promise((resolve, reject) => {
+        console.log('Uploading file to Cloudinary:', file.filename);
         cloudinary.uploader.upload(
           file.path,
           { folder: 'products' },
           (error, result) => {
             if (error) {
+              console.error('Cloudinary upload error:', error);
               reject(error);
             } else {
+              console.log(
+                'Cloudinary upload success:',
+                result.public_id,
+                result.secure_url
+              );
               resolve(result);
             }
           }
@@ -269,11 +276,13 @@ export async function createProduct(req, res) {
     });
 
     const uploadResults = await Promise.all(uploadPromises);
+    console.log('All uploads completed. Total:', uploadResults.length);
 
     const imageObjects = uploadResults.map((result) => ({
       url: result.secure_url || result.url,
       public_id: result.public_id,
     }));
+    console.log('Image objects created:', imageObjects);
 
     if (imageObjects.length !== req.files.length) {
       console.error('Cloudinary upload mismatch', {
@@ -295,9 +304,12 @@ export async function createProduct(req, res) {
       images: imageObjects,
     });
 
+    console.log('Product created with images:', product.images);
     res.status(201).json(product);
   } catch (error) {
     console.error('Error in creating product:', error);
-    res.status(500).json({ message: 'Internal server error' });
+    res
+      .status(500)
+      .json({ message: 'Internal server error', error: error.message });
   }
 }

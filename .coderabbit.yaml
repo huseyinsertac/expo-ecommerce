@@ -1,3 +1,4 @@
-pre_merge_checks:
-  docstrings:
-    mode: "off"
+reviews:
+  pre_merge_checks:
+    docstrings:
+      mode: 'off'

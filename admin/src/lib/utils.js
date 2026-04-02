@@ -35,3 +35,22 @@ export const formatDate = (dateString) => {
     year: 'numeric',
   });
 };
+
+export const getProductImageUrl = (product) => {
+  if (!product?.images || product.images.length === 0) {
+    return 'https://via.placeholder.com/80x80?text=No+Image';
+  }
+
+  const firstImage = product.images[0];
+
+  // Handle both string URLs (old format) and object format (new format)
+  if (typeof firstImage === 'string') {
+    return firstImage;
+  }
+
+  if (typeof firstImage === 'object' && firstImage.url) {
+    return firstImage.url;
+  }
+
+  return 'https://via.placeholder.com/80x80?text=No+Image';
+};

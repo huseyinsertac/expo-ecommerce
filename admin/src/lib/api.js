@@ -24,8 +24,10 @@ export const useAuthenticatedApi = () => {
   return {
     productApi: {
       getAll: () => makeAuthenticatedRequest('get', '/admin/products'),
-      create: (formData) =>
-        makeAuthenticatedRequest('post', '/admin/products', formData),
+      create: (formData) => {
+        // Ensure multipart/form-data is sent correctly
+        return makeAuthenticatedRequest('post', '/admin/products', formData);
+      },
       update: ({ id, formData }) =>
         makeAuthenticatedRequest('put', `/admin/products/${id}`, formData),
       delete: (id) =>

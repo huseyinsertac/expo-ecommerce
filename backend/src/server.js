@@ -26,10 +26,7 @@ if (!ENV.CLIENT_URL) {
 
 app.use(cors({ origin: ENV.CLIENT_URL, credentials: true }));
 
-app.use((req, res, next) => {
-  if (req.method === 'OPTIONS') return next();
-  return clerkMiddleware()(req, res, next);
-});
+app.use(clerkMiddleware());
 
 app.use('/api/inngest', serve({ client: inngest, functions }));
 
