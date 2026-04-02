@@ -1,12 +1,18 @@
-import { orderApi } from '../lib/api';
+import { useAuthenticatedApi } from '../lib/api';
 import { formatDate } from '../lib/utils';
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 function OrdersPage() {
   const queryClient = useQueryClient();
+  const { orderApi } = useAuthenticatedApi();
 
-  const { data: ordersData, isLoading } = useQuery({
+  const {
+    data: ordersData,
+    isLoading,
+    isError,
+    error,
+  } = useQuery({
     queryKey: ['orders'],
     queryFn: orderApi.getAll,
   });
@@ -40,6 +46,13 @@ function OrdersPage() {
           {isLoading ? (
             <div className="flex justify-center py-12">
               <span className="loading loading-spinner loading-lg"></span>
+            </div>
+          ) : isError ? (
+            <div className="text-center py-12 text-error">
+              <p className="text-xl font-semibold mb-2">
+                Failed to load orders.
+              </p>
+              <p className="text-sm">{error?.message || 'Please try again.'}</p>
             </div>
           ) : orders.length === 0 ? (
             <div className="text-center py-12 text-base-content/60">

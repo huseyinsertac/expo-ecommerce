@@ -74,6 +74,18 @@ function CustomersPage() {
                                 }
                                 alt={customer.name}
                                 className="rounded-full w-12 h-12"
+                                onError={(e) => {
+                                  const img = e.currentTarget;
+                                  const currentSrc = img.getAttribute('src');
+
+                                  if (
+                                    currentSrc !== AVATAR_PLACEHOLDER_DATA_URI
+                                  ) {
+                                    img.src = AVATAR_PLACEHOLDER_DATA_URI;
+                                  } else {
+                                    img.onerror = null;
+                                  }
+                                }}
                               />
                             </div>
                           </div>

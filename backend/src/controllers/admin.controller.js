@@ -4,7 +4,7 @@ import Order from '../models/order.model.js';
 import User from '../models/user.model.js';
 import fs from 'fs/promises';
 
-const deleteLocalUploadFiles = async (files = []) => {
+export const deleteLocalUploadFiles = async (files = []) => {
   if (!Array.isArray(files) || files.length === 0) return;
 
   await Promise.all(

@@ -8,14 +8,14 @@ import {
   getAllCustomers,
   getDashboardStats,
   getAllOrders,
+  deleteLocalUploadFiles,
 } from '../controllers/admin.controller.js';
 import { adminOnly, protectRoute } from '../middleware/auth.middleware.js';
 import upload from '../middleware/multer.middleware.js';
-import fs from 'fs/promises';
 
 const router = Router();
 
-const deleteLocalUploadFiles = async (req) => {
+const cleanupRequestFiles = async (req) => {
   const filesToDelete = [];
 
   if (Array.isArray(req.files)) {
@@ -32,20 +32,14 @@ const deleteLocalUploadFiles = async (req) => {
     filesToDelete.push(req.file);
   }
 
-  await Promise.all(
-    filesToDelete.map((file) =>
-      fs.unlink(file.path).catch(() => {
-        // Ignore cleanup errors so response handling remains predictable.
-      })
-    )
-  );
+  await deleteLocalUploadFiles(filesToDelete);
 };
 
 const handleProductImageUpload = (req, res, next) => {
   upload.array('images', 3)(req, res, async (err) => {
     if (!err) return next();
 
-    await deleteLocalUploadFiles(req);
+    await cleanupRequestFiles(req);
 
     if (err.name === 'MulterError') {
       return res.status(400).json({ message: err.message });
