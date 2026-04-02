@@ -66,13 +66,16 @@ function OrdersPage() {
                     const orderItems = Array.isArray(order.orderItems)
                       ? order.orderItems
                       : [];
-                    const totalQuantity = orderItems.reduce(
-                      (sum, item) => sum + item.quantity,
-                      0
-                    );
-                    const orderTotal = Number(
-                      order.totalPrice ?? order.total ?? 0
-                    );
+                    const totalQuantity = orderItems.reduce((sum, item) => {
+                      const normalizedQuantity = Number(item?.quantity);
+                      return (
+                        sum +
+                        (Number.isFinite(normalizedQuantity)
+                          ? normalizedQuantity
+                          : 0)
+                      );
+                    }, 0);
+                    const orderTotal = Number(order.totalPrice ?? 0);
                     return (
                       <tr key={order._id}>
                         <td>

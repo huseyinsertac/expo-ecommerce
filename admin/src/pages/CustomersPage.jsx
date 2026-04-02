@@ -2,6 +2,9 @@ import { useQuery } from '@tanstack/react-query';
 import { useAuthenticatedApi } from '../lib/api';
 import { formatDate } from '../lib/utils';
 
+const AVATAR_PLACEHOLDER_DATA_URI =
+  'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 80 80"><rect width="80" height="80" fill="%23e5e7eb"/><text x="50%" y="52%" dominant-baseline="middle" text-anchor="middle" fill="%236b7280" font-family="Arial,sans-serif" font-size="12">No Image</text></svg>';
+
 function CustomersPage() {
   const { customerApi } = useAuthenticatedApi();
 
@@ -17,10 +20,12 @@ function CustomersPage() {
       {/* HEADER */}
       <div>
         <h1 className="text-2xl font-bold">Customers</h1>
-        <p className="text-base-content/70 mt-1">
-          {customers.length} {customers.length === 1 ? 'customer' : 'customers'}{' '}
-          registered.
-        </p>
+        {!isLoading && !isError && (
+          <p className="text-base-content/70 mt-1">
+            {customers.length}{' '}
+            {customers.length === 1 ? 'customer' : 'customers'} registered.
+          </p>
+        )}
       </div>
       {/* CUSTOMERS TABLE */}
       <div className="card bg-base-100 shadow-xl">
@@ -65,7 +70,7 @@ function CustomersPage() {
                               <img
                                 src={
                                   customer.imageUrl ||
-                                  'https://via.placeholder.com/80x80?text=No+Image'
+                                  AVATAR_PLACEHOLDER_DATA_URI
                                 }
                                 alt={customer.name}
                                 className="rounded-full w-12 h-12"

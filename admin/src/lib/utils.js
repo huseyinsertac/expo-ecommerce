@@ -50,8 +50,9 @@ export const getProductImageUrl = (product) => {
       return firstImage;
     }
 
-    if (typeof firstImage === 'object' && typeof firstImage.url === 'string') {
-      return firstImage.url;
+    if (firstImage && typeof firstImage.url === 'string') {
+      const trimmedUrl = firstImage.url.trim();
+      if (trimmedUrl) return trimmedUrl;
     }
   }
 

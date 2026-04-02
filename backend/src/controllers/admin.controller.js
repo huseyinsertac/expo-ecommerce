@@ -19,20 +19,25 @@ const deleteLocalUploadFiles = async (files = []) => {
 };
 
 const uploadImagesToCloudinary = async (files = []) => {
-  const uploadResults = await Promise.all(
-    files.map(async (file) => {
+  const uploadedImages = [];
+
+  try {
+    for (const file of files) {
       const result = await cloudinary.uploader.upload(file.path, {
         folder: 'products',
       });
 
-      return {
+      uploadedImages.push({
         url: result.secure_url || result.url,
         public_id: result.public_id,
-      };
-    })
-  );
+      });
+    }
 
-  return uploadResults;
+    return uploadedImages;
+  } catch (error) {
+    await deleteCloudinaryImages(uploadedImages);
+    throw error;
+  }
 };
 
 const deleteCloudinaryImages = async (images = []) => {
@@ -61,6 +66,8 @@ export async function adminController(req, res) {
 }
 
 export async function updateProduct(req, res) {
+  let newImages = [];
+
   try {
     const { id } = req.params;
     const { name, description, price, stock, category } = req.body;
@@ -75,36 +82,46 @@ export async function updateProduct(req, res) {
       return res.status(400).json({ message: 'All fields are required' });
     }
 
-    const updatedProduct = await Product.findByIdAndUpdate(
-      id,
-      { name, description, price, stock, category },
-      { new: true, runValidators: true }
-    );
+    const existingProduct = await Product.findById(id);
 
-    if (!updatedProduct) {
+    if (!existingProduct) {
       return res.status(404).json({ message: 'Product not found' });
     }
 
-    if (req.files && req.files.length > 0) {
-      if (req.files.length > 3) {
-        await deleteLocalUploadFiles(req.files);
-        return res.status(400).json({ message: 'Maximum 3 images allowed' });
-      }
-
-      const oldImages = updatedProduct.images || [];
-
-      // Upload new images first so existing images are not lost if upload fails.
-      const newImages = await uploadImagesToCloudinary(req.files);
-
-      updatedProduct.images = newImages;
-      await updatedProduct.save();
-
-      await deleteCloudinaryImages(oldImages);
+    if (req.files && req.files.length > 3) {
       await deleteLocalUploadFiles(req.files);
+      return res.status(400).json({ message: 'Maximum 3 images allowed' });
+    }
+
+    const updatePayload = { name, description, price, stock, category };
+
+    if (req.files && req.files.length > 0) {
+      newImages = await uploadImagesToCloudinary(req.files);
+      updatePayload.images = newImages;
+    }
+
+    const updatedProduct = await Product.findByIdAndUpdate(id, updatePayload, {
+      new: true,
+      runValidators: true,
+    });
+
+    if (newImages.length > 0) {
+      await deleteCloudinaryImages(existingProduct.images || []);
+      await deleteLocalUploadFiles(req.files);
+    }
+
+    if (!updatedProduct) {
+      if (newImages.length > 0) {
+        await deleteCloudinaryImages(newImages);
+      }
+      return res.status(404).json({ message: 'Product not found' });
     }
 
     res.status(200).json(updatedProduct);
   } catch (error) {
+    if (newImages.length > 0) {
+      await deleteCloudinaryImages(newImages);
+    }
     await deleteLocalUploadFiles(req.files || []);
     console.error('Error in updateProduct:', error);
     res.status(500).json({
@@ -211,7 +228,7 @@ export async function updateOrderStatus(req, res) {
 export async function getAllCustomers(_, res) {
   try {
     const customers = await User.find({ role: 'customer' }).select(
-      'name email createdAt'
+      'name email createdAt imageUrl addresses wishlist'
     );
     res.status(200).json({ customers });
   } catch (error) {
@@ -256,6 +273,8 @@ export async function getDashboardStats(_, res) {
 }
 
 export async function createProduct(req, res) {
+  let newImages = [];
+
   try {
     const { name, description, price, stock, category } = req.body;
     if (!name || !description || !price || !stock || !category) {
@@ -274,7 +293,7 @@ export async function createProduct(req, res) {
       return res.status(400).json({ message: 'Maximum 3 images allowed' });
     }
 
-    const imageObjects = await uploadImagesToCloudinary(req.files);
+    newImages = await uploadImagesToCloudinary(req.files);
 
     const product = await Product.create({
       name,
@@ -282,13 +301,16 @@ export async function createProduct(req, res) {
       price,
       stock,
       category,
-      images: imageObjects,
+      images: newImages,
     });
 
     await deleteLocalUploadFiles(req.files);
 
     res.status(201).json(product);
   } catch (error) {
+    if (newImages.length > 0) {
+      await deleteCloudinaryImages(newImages);
+    }
     await deleteLocalUploadFiles(req.files || []);
     console.error('Error in creating product:', error);
     res
