@@ -43,7 +43,7 @@ function OrdersPage() {
             </div>
           ) : orders.length === 0 ? (
             <div className="text-center py-12 text-base-content/60">
-              <p className="text-xl font-semibld mb-2">No orders found.</p>
+              <p className="text-xl font-semibold mb-2">No orders found.</p>
               <p className="text-sm">
                 Once customers start placing orders, they will appear here.
               </p>
@@ -108,7 +108,7 @@ function OrdersPage() {
                               handleStatusChange(order._id, e.target.value)
                             }
                             className="select select-sm"
-                            disabled={updateStatusMutation.isLoading}
+                            disabled={updateStatusMutation.isPending}
                           >
                             <option value="pending">Pending</option>
                             <option value="shipped">Shipped</option>
