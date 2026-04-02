@@ -2,6 +2,7 @@ import cloudinary from '../config/cloudinary.js';
 import Product from '../models/product.model.js';
 import Order from '../models/order.model.js';
 import User from '../models/user.model.js';
+import fs from 'fs/promises';
 export async function adminController(req, res) {
   try {
     // Your admin logic here
@@ -134,7 +135,7 @@ export async function getAllProducts(_, res) {
     const products = await Product.find().sort({ createdAt: -1 });
     res.status(200).json(products);
   } catch (error) {
-    console.error('Error fetching productsz:', error);
+    console.error('Error fetching products:', error);
     res.status(500).json({ message: 'Internal server error' });
   }
 }
@@ -277,6 +278,17 @@ export async function createProduct(req, res) {
 
     const uploadResults = await Promise.all(uploadPromises);
     console.log('All uploads completed. Total:', uploadResults.length);
+
+    // Clean up local files after successful upload
+    await Promise.all(
+      req.files.map((file) =>
+        fs
+          .unlink(file.path)
+          .catch((err) =>
+            console.error(`Failed to delete local file ${file.path}:`, err)
+          )
+      )
+    );
 
     const imageObjects = uploadResults.map((result) => ({
       url: result.secure_url || result.url,

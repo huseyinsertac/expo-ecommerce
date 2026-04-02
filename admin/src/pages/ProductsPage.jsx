@@ -303,6 +303,7 @@ function ProductsPage() {
                   <input
                     type="number"
                     step="0.01"
+                    min="0"
                     placeholder="0.00"
                     className="input input-bordered"
                     value={formData.price}
@@ -319,6 +320,7 @@ function ProductsPage() {
                   </label>
                   <input
                     type="number"
+                    min="0"
                     placeholder="0"
                     className="input input-bordered"
                     value={formData.stock}
