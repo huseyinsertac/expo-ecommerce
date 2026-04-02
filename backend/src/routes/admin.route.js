@@ -8,19 +8,56 @@ import {
   getAllCustomers,
   getDashboardStats,
   getAllOrders,
+  deleteLocalUploadFiles,
 } from '../controllers/admin.controller.js';
 import { adminOnly, protectRoute } from '../middleware/auth.middleware.js';
 import upload from '../middleware/multer.middleware.js';
 
 const router = Router();
 
+const cleanupRequestFiles = async (req) => {
+  const filesToDelete = [];
+
+  if (Array.isArray(req.files)) {
+    filesToDelete.push(...req.files);
+  } else if (req.files && typeof req.files === 'object') {
+    Object.values(req.files).forEach((value) => {
+      if (Array.isArray(value)) {
+        filesToDelete.push(...value);
+      }
+    });
+  }
+
+  if (req.file) {
+    filesToDelete.push(req.file);
+  }
+
+  await deleteLocalUploadFiles(filesToDelete);
+};
+
+const handleProductImageUpload = (req, res, next) => {
+  upload.array('images', 3)(req, res, async (err) => {
+    if (!err) return next();
+
+    await cleanupRequestFiles(req);
+
+    if (err.name === 'MulterError') {
+      return res.status(400).json({ message: err.message });
+    }
+
+    return res
+      .status(400)
+      .json({ message: err.message || 'Invalid image upload' });
+  });
+};
+
 router.use(protectRoute, adminOnly);
 
-router.post('/products', upload.array('images', 3), createProduct);
+router.post('/products', handleProductImageUpload, createProduct);
 
 router.get('/products', getAllProducts);
 
-router.put('/products/:id', upload.array('images', 3), updateProduct);
+router.put('/products/:id', handleProductImageUpload, updateProduct);
 
 router.delete('/products/:id', deleteProduct);
 

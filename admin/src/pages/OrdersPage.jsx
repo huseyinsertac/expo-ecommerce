@@ -1,12 +1,18 @@
-import { orderApi } from '../lib/api';
+import { useAuthenticatedApi } from '../lib/api';
 import { formatDate } from '../lib/utils';
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 function OrdersPage() {
   const queryClient = useQueryClient();
+  const { orderApi } = useAuthenticatedApi();
 
-  const { data: ordersData, isLoading } = useQuery({
+  const {
+    data: ordersData,
+    isLoading,
+    isError,
+    error,
+  } = useQuery({
     queryKey: ['orders'],
     queryFn: orderApi.getAll,
   });
@@ -41,6 +47,13 @@ function OrdersPage() {
             <div className="flex justify-center py-12">
               <span className="loading loading-spinner loading-lg"></span>
             </div>
+          ) : isError ? (
+            <div className="text-center py-12 text-error">
+              <p className="text-xl font-semibold mb-2">
+                Failed to load orders.
+              </p>
+              <p className="text-sm">{error?.message || 'Please try again.'}</p>
+            </div>
           ) : orders.length === 0 ? (
             <div className="text-center py-12 text-base-content/60">
               <p className="text-xl font-semibold mb-2">No orders found.</p>
@@ -63,10 +76,19 @@ function OrdersPage() {
                 </thead>
                 <tbody>
                   {orders.map((order) => {
-                    const totalQuantity = order.orderItems.reduce(
-                      (sum, item) => sum + item.quantity,
-                      0
-                    );
+                    const orderItems = Array.isArray(order.orderItems)
+                      ? order.orderItems
+                      : [];
+                    const totalQuantity = orderItems.reduce((sum, item) => {
+                      const normalizedQuantity = Number(item?.quantity);
+                      return (
+                        sum +
+                        (Number.isFinite(normalizedQuantity)
+                          ? normalizedQuantity
+                          : 0)
+                      );
+                    }, 0);
+                    const orderTotal = Number(order.totalPrice ?? 0);
                     return (
                       <tr key={order._id}>
                         <td>
@@ -77,11 +99,11 @@ function OrdersPage() {
 
                         <td>
                           <div className="font-medium">
-                            {order.shippingAddress.fullName}
+                            {order.shippingAddress?.fullName || 'N/A'}
                           </div>
                           <div className="text-sm opacity-60">
-                            {order.shippingAddress.city},{' '}
-                            {order.shippingAddress.state}
+                            {order.shippingAddress?.city || 'N/A'},{' '}
+                            {order.shippingAddress?.state || 'N/A'}
                           </div>
                         </td>
 
@@ -90,15 +112,18 @@ function OrdersPage() {
                             {totalQuantity} item{totalQuantity > 1 ? 's' : ''}
                           </div>
                           <div className="text-sm opacity-60">
-                            {order.orderItems[0]?.name}
-                            {order.orderItems.length > 1 &&
-                              ` +${order.orderItems.length - 1} more`}
+                            {orderItems[0]?.name || 'No item details'}
+                            {orderItems.length > 1 &&
+                              ` +${orderItems.length - 1} more`}
                           </div>
                         </td>
 
                         <td>
                           <span className="font-semibold">
-                            ${order.total.toFixed(2)}
+                            $
+                            {Number.isFinite(orderTotal)
+                              ? orderTotal.toFixed(2)
+                              : '0.00'}
                           </span>
                         </td>
                         <td>

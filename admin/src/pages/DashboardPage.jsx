@@ -6,6 +6,7 @@ import {
   UsersIcon,
   PackageIcon,
 } from 'lucide-react';
+import * as Sentry from '@sentry/react';
 import { formatDate } from '../lib/utils';
 
 const getOrderStatusBadge = (status) => {

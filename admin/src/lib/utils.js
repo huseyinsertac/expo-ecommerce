@@ -36,21 +36,34 @@ export const formatDate = (dateString) => {
   });
 };
 
+export const PRODUCT_IMAGE_PLACEHOLDER =
+  'https://via.placeholder.com/80x80?text=No+Image';
+
 export const getProductImageUrl = (product) => {
-  if (!product?.images || product.images.length === 0) {
-    return 'https://via.placeholder.com/80x80?text=No+Image';
+  const images = Array.isArray(product?.images) ? product.images : [];
+
+  if (images.length > 0) {
+    const firstImage = images[0];
+
+    // Handle both string URLs (old format) and object format (new format)
+    if (typeof firstImage === 'string' && firstImage.trim()) {
+      return firstImage;
+    }
+
+    if (firstImage && typeof firstImage.url === 'string') {
+      const trimmedUrl = firstImage.url.trim();
+      if (trimmedUrl) return trimmedUrl;
+    }
   }
 
-  const firstImage = product.images[0];
-
-  // Handle both string URLs (old format) and object format (new format)
-  if (typeof firstImage === 'string') {
-    return firstImage;
+  // Fallback for legacy product formats.
+  if (typeof product?.image === 'string' && product.image.trim()) {
+    return product.image;
   }
 
-  if (typeof firstImage === 'object' && firstImage.url) {
-    return firstImage.url;
+  if (typeof product?.imageUrl === 'string' && product.imageUrl.trim()) {
+    return product.imageUrl;
   }
 
-  return 'https://via.placeholder.com/80x80?text=No+Image';
+  return PRODUCT_IMAGE_PLACEHOLDER;
 };
