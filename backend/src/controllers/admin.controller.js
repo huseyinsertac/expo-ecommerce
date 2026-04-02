@@ -3,6 +3,53 @@ import Product from '../models/product.model.js';
 import Order from '../models/order.model.js';
 import User from '../models/user.model.js';
 import fs from 'fs/promises';
+
+const deleteLocalUploadFiles = async (files = []) => {
+  if (!Array.isArray(files) || files.length === 0) return;
+
+  await Promise.all(
+    files.map((file) =>
+      fs
+        .unlink(file.path)
+        .catch((err) =>
+          console.error(`Failed to delete local file ${file.path}:`, err)
+        )
+    )
+  );
+};
+
+const uploadImagesToCloudinary = async (files = []) => {
+  const uploadResults = await Promise.all(
+    files.map(async (file) => {
+      const result = await cloudinary.uploader.upload(file.path, {
+        folder: 'products',
+      });
+
+      return {
+        url: result.secure_url || result.url,
+        public_id: result.public_id,
+      };
+    })
+  );
+
+  return uploadResults;
+};
+
+const deleteCloudinaryImages = async (images = []) => {
+  if (!Array.isArray(images) || images.length === 0) return;
+
+  await Promise.all(
+    images.map(async (image) => {
+      if (!image?.public_id) return;
+      try {
+        await cloudinary.uploader.destroy(image.public_id);
+      } catch (error) {
+        console.error(`Failed to delete image ${image.public_id}:`, error);
+      }
+    })
+  );
+};
+
 export async function adminController(req, res) {
   try {
     // Your admin logic here
@@ -40,58 +87,30 @@ export async function updateProduct(req, res) {
 
     if (req.files && req.files.length > 0) {
       if (req.files.length > 3) {
+        await deleteLocalUploadFiles(req.files);
         return res.status(400).json({ message: 'Maximum 3 images allowed' });
       }
 
-      // Delete old images from Cloudinary
-      if (updatedProduct.images && updatedProduct.images.length > 0) {
-        const deletePromises = updatedProduct.images.map((image) => {
-          return new Promise((resolve) => {
-            cloudinary.uploader.destroy(image.public_id, (error) => {
-              if (error) {
-                console.error(
-                  `Failed to delete image ${image.public_id}:`,
-                  error
-                );
-              }
-              resolve();
-            });
-          });
-        });
-        await Promise.all(deletePromises);
-      }
+      const oldImages = updatedProduct.images || [];
 
-      const uploadPromises = req.files.map((file) => {
-        return new Promise((resolve, reject) => {
-          cloudinary.uploader.upload(
-            file.path,
-            { folder: 'products' },
-            (error, result) => {
-              if (error) {
-                reject(error);
-              } else {
-                resolve(result);
-              }
-            }
-          );
-        });
-      });
+      // Upload new images first so existing images are not lost if upload fails.
+      const newImages = await uploadImagesToCloudinary(req.files);
 
-      const uploadResults = await Promise.all(uploadPromises);
-
-      const imageObjects = uploadResults.map((result) => ({
-        url: result.secure_url || result.url,
-        public_id: result.public_id,
-      }));
-
-      updatedProduct.images = imageObjects;
+      updatedProduct.images = newImages;
       await updatedProduct.save();
+
+      await deleteCloudinaryImages(oldImages);
+      await deleteLocalUploadFiles(req.files);
     }
 
     res.status(200).json(updatedProduct);
   } catch (error) {
+    await deleteLocalUploadFiles(req.files || []);
     console.error('Error in updateProduct:', error);
-    res.status(500).json({ message: 'Internal server error' });
+    res.status(500).json({
+      message: 'Internal server error',
+      error: error.message,
+    });
   }
 }
 
@@ -240,6 +259,7 @@ export async function createProduct(req, res) {
   try {
     const { name, description, price, stock, category } = req.body;
     if (!name || !description || !price || !stock || !category) {
+      await deleteLocalUploadFiles(req.files || []);
       return res.status(400).json({ message: 'All fields are required' });
     }
 
@@ -250,62 +270,11 @@ export async function createProduct(req, res) {
     }
 
     if (req.files.length > 3) {
+      await deleteLocalUploadFiles(req.files);
       return res.status(400).json({ message: 'Maximum 3 images allowed' });
     }
 
-    const uploadPromises = req.files.map((file) => {
-      return new Promise((resolve, reject) => {
-        console.log('Uploading file to Cloudinary:', file.filename);
-        cloudinary.uploader.upload(
-          file.path,
-          { folder: 'products' },
-          (error, result) => {
-            if (error) {
-              console.error('Cloudinary upload error:', error);
-              reject(error);
-            } else {
-              console.log(
-                'Cloudinary upload success:',
-                result.public_id,
-                result.secure_url
-              );
-              resolve(result);
-            }
-          }
-        );
-      });
-    });
-
-    const uploadResults = await Promise.all(uploadPromises);
-    console.log('All uploads completed. Total:', uploadResults.length);
-
-    // Clean up local files after successful upload
-    await Promise.all(
-      req.files.map((file) =>
-        fs
-          .unlink(file.path)
-          .catch((err) =>
-            console.error(`Failed to delete local file ${file.path}:`, err)
-          )
-      )
-    );
-
-    const imageObjects = uploadResults.map((result) => ({
-      url: result.secure_url || result.url,
-      public_id: result.public_id,
-    }));
-    console.log('Image objects created:', imageObjects);
-
-    if (imageObjects.length !== req.files.length) {
-      console.error('Cloudinary upload mismatch', {
-        reqFiles: req.files,
-        uploadResults,
-        imageObjects,
-      });
-      return res.status(500).json({
-        message: 'Image upload failed, please try again',
-      });
-    }
+    const imageObjects = await uploadImagesToCloudinary(req.files);
 
     const product = await Product.create({
       name,
@@ -316,9 +285,11 @@ export async function createProduct(req, res) {
       images: imageObjects,
     });
 
-    console.log('Product created with images:', product.images);
+    await deleteLocalUploadFiles(req.files);
+
     res.status(201).json(product);
   } catch (error) {
+    await deleteLocalUploadFiles(req.files || []);
     console.error('Error in creating product:', error);
     res
       .status(500)

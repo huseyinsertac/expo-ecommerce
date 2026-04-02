@@ -63,9 +63,15 @@ function OrdersPage() {
                 </thead>
                 <tbody>
                   {orders.map((order) => {
-                    const totalQuantity = order.orderItems.reduce(
+                    const orderItems = Array.isArray(order.orderItems)
+                      ? order.orderItems
+                      : [];
+                    const totalQuantity = orderItems.reduce(
                       (sum, item) => sum + item.quantity,
                       0
+                    );
+                    const orderTotal = Number(
+                      order.totalPrice ?? order.total ?? 0
                     );
                     return (
                       <tr key={order._id}>
@@ -77,11 +83,11 @@ function OrdersPage() {
 
                         <td>
                           <div className="font-medium">
-                            {order.shippingAddress.fullName}
+                            {order.shippingAddress?.fullName || 'N/A'}
                           </div>
                           <div className="text-sm opacity-60">
-                            {order.shippingAddress.city},{' '}
-                            {order.shippingAddress.state}
+                            {order.shippingAddress?.city || 'N/A'},{' '}
+                            {order.shippingAddress?.state || 'N/A'}
                           </div>
                         </td>
 
@@ -90,15 +96,18 @@ function OrdersPage() {
                             {totalQuantity} item{totalQuantity > 1 ? 's' : ''}
                           </div>
                           <div className="text-sm opacity-60">
-                            {order.orderItems[0]?.name}
-                            {order.orderItems.length > 1 &&
-                              ` +${order.orderItems.length - 1} more`}
+                            {orderItems[0]?.name || 'No item details'}
+                            {orderItems.length > 1 &&
+                              ` +${orderItems.length - 1} more`}
                           </div>
                         </td>
 
                         <td>
                           <span className="font-semibold">
-                            ${order.total.toFixed(2)}
+                            $
+                            {Number.isFinite(orderTotal)
+                              ? orderTotal.toFixed(2)
+                              : '0.00'}
                           </span>
                         </td>
                         <td>

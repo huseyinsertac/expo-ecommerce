@@ -8,7 +8,11 @@ import {
 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuthenticatedApi } from '../lib/api';
-import { getStockStatusBadge, getProductImageUrl } from '../lib/utils';
+import {
+  getStockStatusBadge,
+  getProductImageUrl,
+  PRODUCT_IMAGE_PLACEHOLDER,
+} from '../lib/utils';
 
 function ProductsPage() {
   const { productApi } = useAuthenticatedApi();
@@ -43,7 +47,10 @@ function ProductsPage() {
       console.error('Create product error', error);
       const message =
         error?.response?.data?.message || error?.message || 'Unknown error';
-      alert(`Create product failed: ${message}`);
+      const details = error?.response?.data?.error;
+      alert(
+        `Create product failed: ${details ? `${message} (${details})` : message}`
+      );
     },
   });
 
@@ -58,7 +65,10 @@ function ProductsPage() {
       console.error('Update product error', error);
       const message =
         error?.response?.data?.message || error?.message || 'Unknown error';
-      alert(`Update product failed: ${message}`);
+      const details = error?.response?.data?.error;
+      alert(
+        `Update product failed: ${details ? `${message} (${details})` : message}`
+      );
     },
   });
 
@@ -87,14 +97,12 @@ function ProductsPage() {
       description: '',
     });
     setImages([]);
-    +(
-      // Revoke blob URLs before clearing
-      imagePreviews.forEach((preview) => {
-        if (typeof preview === 'string' && preview.startsWith('blob:')) {
-          URL.revokeObjectURL(preview);
-        }
-      })
-    );
+    // Revoke blob URLs before clearing.
+    imagePreviews.forEach((preview) => {
+      if (typeof preview === 'string' && preview.startsWith('blob:')) {
+        URL.revokeObjectURL(preview);
+      }
+    });
     setImagePreviews([]);
   };
 
@@ -184,6 +192,10 @@ function ProductsPage() {
                       <img
                         src={getProductImageUrl(product)}
                         alt={product.name}
+                        onError={(e) => {
+                          e.currentTarget.onerror = null;
+                          e.currentTarget.src = PRODUCT_IMAGE_PLACEHOLDER;
+                        }}
                       />
                     </div>
                   </div>

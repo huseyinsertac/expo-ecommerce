@@ -14,13 +14,27 @@ import upload from '../middleware/multer.middleware.js';
 
 const router = Router();
 
+const handleProductImageUpload = (req, res, next) => {
+  upload.array('images', 3)(req, res, (err) => {
+    if (!err) return next();
+
+    if (err.name === 'MulterError') {
+      return res.status(400).json({ message: err.message });
+    }
+
+    return res
+      .status(400)
+      .json({ message: err.message || 'Invalid image upload' });
+  });
+};
+
 router.use(protectRoute, adminOnly);
 
-router.post('/products', upload.array('images', 3), createProduct);
+router.post('/products', handleProductImageUpload, createProduct);
 
 router.get('/products', getAllProducts);
 
-router.put('/products/:id', upload.array('images', 3), updateProduct);
+router.put('/products/:id', handleProductImageUpload, updateProduct);
 
 router.delete('/products/:id', deleteProduct);
 
