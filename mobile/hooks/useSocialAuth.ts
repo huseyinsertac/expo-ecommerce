@@ -16,6 +16,8 @@ function useSocialAuth() {
           
            if(createdSessionId && setActive) {
             await setActive({ session: createdSessionId });
+        } else {
+            Alert.alert('Authentication Canceled', 'No session was created. Please try signing in again.');
         }
         } catch (error) {
            console.log('Social auth error:', error);
