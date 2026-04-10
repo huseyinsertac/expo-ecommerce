@@ -2,7 +2,6 @@ import { Stack } from 'expo-router';
 import '../global.css';
 import {
   MutationCache,
-  Query,
   QueryCache,
   QueryClient,
   QueryClientProvider,
@@ -10,26 +9,35 @@ import {
 import { ClerkProvider } from '@clerk/clerk-expo';
 import { tokenCache } from '@clerk/clerk-expo/token-cache';
 import * as Sentry from '@sentry/react-native';
-import { HttpStatusCode } from 'axios';
 
-Sentry.init({
-  dsn: 'https://2cb5241bc4b4fa2d1e775cbeae9b0f01@o4511151271510016.ingest.de.sentry.io/4511184898228304',
+const sentryDsn = process.env.EXPO_PUBLIC_SENTRY_DSN;
 
-  // Adds more context data to events (IP address, cookies, user, etc.)
-  // For more information, visit: https://docs.sentry.io/platforms/react-native/data-management/data-collected/
-  sendDefaultPii: true,
+async function initSentry() {
+  if (!sentryDsn) {
+    return;
+  }
 
-  // Enable Logs
-  enableLogs: true,
+  Sentry.init({
+    dsn: sentryDsn,
 
-  // Configure Session Replay
-  replaysSessionSampleRate: 1.0,
-  replaysOnErrorSampleRate: 1,
-  integrations: [Sentry.mobileReplayIntegration()],
+    // Adds more context data to events (IP address, cookies, user, etc.)
+    // For more information, visit: https://docs.sentry.io/platforms/react-native/data-management/data-collected/
+    sendDefaultPii: true,
 
-  // uncomment the line below to enable Spotlight (https://spotlightjs.com)
-  // spotlight: __DEV__,
-});
+    // Enable Logs
+    enableLogs: true,
+
+    // Configure Session Replay
+    replaysSessionSampleRate: 1.0,
+    replaysOnErrorSampleRate: 1,
+    integrations: [Sentry.mobileReplayIntegration()],
+
+    // uncomment the line below to enable Spotlight (https://spotlightjs.com)
+    // spotlight: __DEV__,
+  });
+}
+
+void initSentry();
 
 const queryClient = new QueryClient({
   queryCache: new QueryCache({

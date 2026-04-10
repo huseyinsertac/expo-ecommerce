@@ -1,10 +1,7 @@
 import { Redirect, Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@clerk/clerk-expo';
-import {
-  useSafeAreaFrame,
-  useSafeAreaInsets,
-} from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BlurView } from 'expo-blur';
 import { StyleSheet } from 'react-native';
 
@@ -25,9 +22,10 @@ const TabsLayout = () => {
           position: 'absolute',
           backgroundColor: 'transparent',
           borderTopWidth: 0,
-          height: 32 + insets.bottom,
-          paddingTop: 4,
-          marginHorizontal: 100,
+          minHeight: 56 + insets.bottom,
+          paddingTop: 6,
+          paddingBottom: Math.max(insets.bottom, 6),
+          marginHorizontal: 24,
           marginBottom: insets.bottom,
           borderRadius: 24,
           overflow: 'hidden',

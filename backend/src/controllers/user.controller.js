@@ -130,32 +130,30 @@ export async function deleteAddress(req, res) {
 export async function addToWishlist(req, res) {
   try {
     const { productId } = req.body;
-    const user = await User.findById(req.user._id);
 
     if (!productId) {
       return res.status(400).json({ message: 'Product ID is required' });
     }
 
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
+    const updatedUser = await User.findOneAndUpdate(
+      { _id: req.user._id, wishlist: { $ne: productId } },
+      { $addToSet: { wishlist: productId } },
+      { new: true }
+    ).populate('wishlist');
 
-    const alreadyInWishlist = user.wishlist.some(
-      (item) => item.toString() === productId
-    );
+    if (!updatedUser) {
+      const userExists = await User.exists({ _id: req.user._id });
 
-    if (alreadyInWishlist) {
+      if (!userExists) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+
       return res.status(400).json({ message: 'Product already in wishlist' });
     }
 
-    user.wishlist.push(productId);
-    await user.save();
-
-    await user.populate('wishlist');
-
     res.status(200).json({
       message: 'Product added to wishlist',
-      wishlist: user.wishlist,
+      wishlist: updatedUser.wishlist,
     });
   } catch (error) {
     console.error('Error adding to wishlist:', error);
@@ -166,32 +164,30 @@ export async function addToWishlist(req, res) {
 export async function removeFromWishlist(req, res) {
   try {
     const { productId } = req.params;
-    const user = await User.findById(req.user._id);
 
     if (!productId) {
       return res.status(400).json({ message: 'Product ID is required' });
     }
 
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
+    const updatedUser = await User.findOneAndUpdate(
+      { _id: req.user._id, wishlist: productId },
+      { $pull: { wishlist: productId } },
+      { new: true }
+    ).populate('wishlist');
 
-    const isInWishlist = user.wishlist.some(
-      (item) => item.toString() === productId
-    );
+    if (!updatedUser) {
+      const userExists = await User.exists({ _id: req.user._id });
 
-    if (!isInWishlist) {
+      if (!userExists) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+
       return res.status(404).json({ message: 'Product not found in wishlist' });
     }
 
-    user.wishlist.pull(productId);
-    await user.save();
-
-    await user.populate('wishlist');
-
     res.status(200).json({
       message: 'Product removed from wishlist',
-      wishlist: user.wishlist,
+      wishlist: updatedUser.wishlist,
     });
   } catch (error) {
     console.error('Error removing from wishlist:', error);

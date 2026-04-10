@@ -10,10 +10,7 @@ import {
   TouchableOpacity,
   TextInput,
   Image,
-  Button,
 } from 'react-native';
-
-import * as Sentry from '@sentry/react-native';
 
 const CATEGORIES = [
   { name: 'All', icon: 'grid-outline' as const },
@@ -30,7 +27,10 @@ const ShopScreen = () => {
   const filteredProducts = useMemo(() => {
     if (!products) return [];
 
+    const trimmedSearch = searchQuery.trim();
+
     let filtered = products;
+    const normalizedQuery = searchQuery.trim().toLowerCase();
 
     // Filter by category
     if (selectedCategory !== 'All') {
@@ -40,9 +40,9 @@ const ShopScreen = () => {
     }
 
     // Filter by search query
-    if (searchQuery.trim() !== '') {
+    if (normalizedQuery !== '') {
       filtered = filtered.filter((product) =>
-        product.name.toLowerCase().includes(searchQuery.toLowerCase())
+        product.name.toLowerCase().includes(normalizedQuery)
       );
     }
 

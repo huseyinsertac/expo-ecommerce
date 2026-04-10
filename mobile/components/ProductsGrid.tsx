@@ -2,6 +2,7 @@ import useCart from '@/hooks/useCart';
 import useWishlist from '@/hooks/useWishlist';
 import { Product } from '@/types';
 import { Ionicons } from '@expo/vector-icons';
+import { useState } from 'react';
 import {
   View,
   Text,
@@ -20,14 +21,49 @@ interface ProductsGridProps {
 }
 
 const ProductsGrid = ({ products, isLoading, isError }: ProductsGridProps) => {
-  const {
-    isInWishlist,
-    toggleWishList,
-    isAddingToWishlist,
-    isRemovingFromWishlist,
-  } = useWishlist();
-  const { isAddingToCart, addToCart } = useCart(); // Implement useCart hook for cart functionality
+  const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist();
+  const { addToCart } = useCart();
+  const [pendingWishlistIds, setPendingWishlistIds] = useState<Set<string>>(
+    () => new Set()
+  );
+  const [pendingCartIds, setPendingCartIds] = useState<Set<string>>(
+    () => new Set()
+  );
+
+  const addPendingWishlist = (productId: string) => {
+    setPendingWishlistIds((prev) => new Set(prev).add(productId));
+  };
+
+  const removePendingWishlist = (productId: string) => {
+    setPendingWishlistIds((prev) => {
+      const next = new Set(prev);
+      next.delete(productId);
+      return next;
+    });
+  };
+
+  const isPendingWishlist = (productId: string) => {
+    return pendingWishlistIds.has(productId);
+  };
+
+  const addPendingCart = (productId: string) => {
+    setPendingCartIds((prev) => new Set(prev).add(productId));
+  };
+
+  const removePendingCart = (productId: string) => {
+    setPendingCartIds((prev) => {
+      const next = new Set(prev);
+      next.delete(productId);
+      return next;
+    });
+  };
+
+  const isPendingCart = (productId: string) => {
+    return pendingCartIds.has(productId);
+  };
+
   const handleAddToCart = (productId: string, productName: string) => {
+    addPendingCart(productId);
     addToCart(
       { productId, quantity: 1 },
       {
@@ -43,6 +79,9 @@ const ProductsGrid = ({ products, isLoading, isError }: ProductsGridProps) => {
               'Failed to add to cart. Please try again.'
           );
         },
+        onSettled: () => {
+          removePendingCart(productId);
+        },
       }
     );
   };
@@ -52,7 +91,20 @@ const ProductsGrid = ({ products, isLoading, isError }: ProductsGridProps) => {
     productId: string
   ) => {
     event.stopPropagation();
-    toggleWishList(productId);
+
+    if (isPendingWishlist(productId)) {
+      return;
+    }
+
+    addPendingWishlist(productId);
+
+    const mutate = isInWishlist(productId) ? removeFromWishlist : addToWishlist;
+
+    mutate(productId, {
+      onSettled: () => {
+        removePendingWishlist(productId);
+      },
+    });
   };
 
   const renderProduct = ({ item: product }: { item: Product }) => {
@@ -63,18 +115,24 @@ const ProductsGrid = ({ products, isLoading, isError }: ProductsGridProps) => {
         activeOpacity={0.8}
       >
         <View className="relative">
-          <Image
-            source={{ uri: product.images[0].url }}
-            className="w-full h-44 bg-background-lighter"
-            resizeMode="cover"
-          />
+          {product.images?.[0]?.url ? (
+            <Image
+              source={{ uri: product.images[0].url }}
+              className="w-full h-44 bg-background-lighter"
+              resizeMode="cover"
+            />
+          ) : (
+            <View className="w-full h-44 bg-background-lighter items-center justify-center">
+              <Ionicons name="image-outline" size={24} color="#666" />
+            </View>
+          )}
           <TouchableOpacity
             className="absolute top-3 right-3 bg-black/30 backdrop-blur-xl rounded-full"
             activeOpacity={0.7}
             onPress={(event) => handleToggleWishlist(event, product._id)}
-            disabled={isAddingToWishlist || isRemovingFromWishlist}
+            disabled={isPendingWishlist(product._id)}
           >
-            {isAddingToWishlist || isRemovingFromWishlist ? (
+            {isPendingWishlist(product._id) ? (
               <ActivityIndicator size="small" color="#FFFFFF" />
             ) : (
               <Ionicons
@@ -111,9 +169,9 @@ const ProductsGrid = ({ products, isLoading, isError }: ProductsGridProps) => {
             <TouchableOpacity
               className="bg-primary rounded-full w-8 h-8 items-center justify-center"
               onPress={() => handleAddToCart(product._id, product.name)}
-              disabled={isAddingToCart}
+              disabled={isPendingCart(product._id)}
             >
-              {isAddingToCart ? (
+              {isPendingCart(product._id) ? (
                 <ActivityIndicator size="small" color="#121212" />
               ) : (
                 <Ionicons name="add" size={18} color="#121212" />
