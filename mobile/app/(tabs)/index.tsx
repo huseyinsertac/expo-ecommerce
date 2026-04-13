@@ -27,8 +27,6 @@ const ShopScreen = () => {
   const filteredProducts = useMemo(() => {
     if (!products) return [];
 
-    const trimmedSearch = searchQuery.trim();
-
     let filtered = products;
     const normalizedQuery = searchQuery.trim().toLowerCase();
 

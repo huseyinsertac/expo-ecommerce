@@ -4,6 +4,7 @@ import SafeScreen from '@/components/SafeScreen';
 import { useAuth, useUser } from '@clerk/clerk-expo';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
 const MENU_ITEMS = [
   {
     id: 1,
@@ -40,14 +41,8 @@ const ProfileScreen = () => {
   const { user } = useUser();
 
   const handleMenuPress = (action: (typeof MENU_ITEMS)[number]['action']) => {
-    if (action === '/profile') {
-      // For now, we only have the profile screen implemented
-      // In a real app, you'd navigate to the respective screens
-      alert('Profile editing coming soon!');
-    } else {
-      alert('This feature is coming soon!');
-      //router.push(action);
-    }
+    if (action === '/profile') alert('Profile editing coming soon!');
+    router.push(action);
   };
 
   return (
@@ -131,7 +126,7 @@ const ProfileScreen = () => {
           <TouchableOpacity
             className="flex-row items-center justify-between py-2"
             activeOpacity={0.7}
-            //onPress={() => router.push('/privacy-security')}
+            onPress={() => router.push('/privacy-security')}
           >
             <View className="flex-row items-center">
               <Ionicons
