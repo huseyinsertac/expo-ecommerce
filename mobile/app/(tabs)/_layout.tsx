@@ -71,12 +71,6 @@ const TabsLayout = () => {
           ),
         }}
       />
-      <Tabs.Screen
-        name="wishlist"
-        options={{
-          href: null,
-        }}
-      />
     </Tabs>
   );
 };
