@@ -6,22 +6,26 @@ export async function addAddress(req, res) {
       label,
       fullName,
       streetAddress,
+      street,
       city,
-      state,
-      zipCode,
+      stateCode,
+      zip,
       phoneNumber,
+      country,
       isDefault,
     } = req.body;
 
     const user = req.user;
 
     if (
+      !label ||
       !fullName ||
       !streetAddress ||
       !city ||
-      !state ||
-      !zipCode ||
-      !phoneNumber
+      !stateCode ||
+      !zip ||
+      !phoneNumber ||
+      !country
     ) {
       return res.status(400).json({ message: 'All fields are required' });
     }
@@ -34,10 +38,12 @@ export async function addAddress(req, res) {
       label,
       fullName,
       streetAddress,
+      street,
       city,
-      state,
-      zipCode,
+      stateCode,
+      zip,
       phoneNumber,
+      country,
       isDefault: isDefault || false,
     });
 
@@ -68,7 +74,7 @@ export async function getAddresses(req, res) {
 
 export async function updateAddress(req, res) {
   try {
-    const addressId = req.params;
+    const { addressId } = req.params;
 
     const user = req.user;
     const address = user.addresses.id(addressId);
@@ -80,10 +86,12 @@ export async function updateAddress(req, res) {
       label,
       fullName,
       streetAddress,
+      street,
       city,
-      state,
-      zipCode,
+      stateCode,
+      zip,
       phoneNumber,
+      country,
       isDefault,
     } = req.body;
 
@@ -96,10 +104,11 @@ export async function updateAddress(req, res) {
     address.streetAddress = streetAddress || address.streetAddress;
     address.street = street || address.street;
     address.city = city || address.city;
-    address.state = state || address.state;
-    address.zipCode = zipCode || address.zipCode;
+    address.stateCode = stateCode || address.stateCode;
+    address.zip = zip || address.zip;
     address.phoneNumber = phoneNumber || address.phoneNumber;
-    address.isDefault = isDefault || address.isDefault;
+    address.country = country || address.country;
+    address.isDefault = isDefault !== undefined ? isDefault : address.isDefault;
 
     await user.save();
     res.status(200).json({
@@ -114,7 +123,7 @@ export async function updateAddress(req, res) {
 
 export async function deleteAddress(req, res) {
   try {
-    const addressId = req.params;
+    const { addressId } = req.params;
     const user = req.user;
 
     user.addresses.pull(addressId);

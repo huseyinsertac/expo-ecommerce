@@ -1,7 +1,7 @@
 import { useApi } from '@/lib/api';
 import type { Cart } from '@/types';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
- 
+
 type AddToCartPayload = {
   productId: string;
   quantity?: number;
