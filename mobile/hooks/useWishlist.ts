@@ -6,19 +6,28 @@ const useWishlist = () => {
   const api = useApi();
   const queryClient = useQueryClient();
 
-  const { data: wishlist, isLoading, isError } = useQuery<Product[]>({
+  const {
+    data: wishlist,
+    isLoading,
+    isError,
+  } = useQuery<Product[]>({
     queryKey: ['wishlist'],
     queryFn: async () => {
-      const { data } = await api.get<{ wishlist: Product[] }>('/users/wishlist');
+      const { data } = await api.get<{ wishlist: Product[] }>(
+        '/users/wishlist'
+      );
       return data.wishlist;
     },
   });
 
   const addToWishlistMutation = useMutation({
     mutationFn: async (productId: string) => {
-      const { data } = await api.post<{ wishlist: Product[] }>('/users/wishlist', {
-        productId,
-      });
+      const { data } = await api.post<{ wishlist: Product[] }>(
+        '/users/wishlist',
+        {
+          productId,
+        }
+      );
       return data.wishlist;
     },
     onSuccess: () => {

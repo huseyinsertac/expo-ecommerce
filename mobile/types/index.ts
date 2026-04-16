@@ -66,7 +66,7 @@ export interface Order {
     status: string;
   };
   totalPrice: number;
-  status: "pending" | "shipped" | "delivered" | "cancelled";
+  status: 'pending' | 'shipped' | 'delivered' | 'cancelled';
   createdAt: string;
   updatedAt: string;
 }
