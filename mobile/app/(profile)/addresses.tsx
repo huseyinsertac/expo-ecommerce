@@ -21,6 +21,7 @@ function AddressesScreen() {
     addresses,
     deleteAddress,
     isAddingAddress,
+    isDeletingAddress,
     isError,
     isLoading,
     isUpdatingAddress,
@@ -122,7 +123,7 @@ function AddressesScreen() {
 
             Alert.alert(
               'Error',
-              error?.response?.data?.message || 'Failed to add address'
+              error?.response?.data?.message || 'Failed to update address'
             );
           },
         }
@@ -193,7 +194,7 @@ function AddressesScreen() {
                   onEdit={handleEditAddress}
                   onDelete={handleDeleteAddress}
                   isUpdatingAddress={isUpdatingAddress}
-                  isDeletingAddress={isAddingAddress}
+                  isDeletingAddress={isDeletingAddress}
                 />
               ))}
 

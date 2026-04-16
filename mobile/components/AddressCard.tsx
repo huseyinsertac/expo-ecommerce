@@ -41,7 +41,7 @@ export default function AddressCard({
         <Text className="text-text-secondary text-sm mb-1">
           {address.streetAddress}
         </Text>
-        {address.street.length > 0 && (
+        {!!address.street && (
           <Text className="text-text-secondary text-sm mb-1">
             {address.street}
           </Text>

@@ -37,7 +37,12 @@ function useSocialAuth() {
         );
       }
     } catch (error) {
-      console.log('Social auth error:', error);
+      if (__DEV__) {
+        console.log(
+          'Social auth error:',
+          error instanceof Error ? error.message : String(error)
+        );
+      }
       const providerName = strategy === 'oauth_google' ? 'Google' : 'Apple';
       Alert.alert(
         'Authentication Error',
