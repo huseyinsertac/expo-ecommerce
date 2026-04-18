@@ -19,8 +19,8 @@ import {
 const { width } = Dimensions.get('window');
 
 const ProductDetailScreen = () => {
-  const { id } = useLocalSearchParams();
-  const { data: product, isError, isLoading } = useProduct(id as string);
+  const { id } = useLocalSearchParams<{ id: string }>();
+  const { data: product, isError, isLoading } = useProduct(id);
   const { addToCart, isAddingToCart } = useCart();
   const {
     isInWishlist,
@@ -42,7 +42,10 @@ const ProductDetailScreen = () => {
         onError: (error: any) => {
           Alert.alert(
             'Error',
-            error?.response?.data?.error || 'Failed to add to cart'
+            error?.response?.data?.error ||
+              error?.response?.data?.message ||
+              error?.message ||
+              'Failed to add to cart. Please try again.'
           );
         },
       }
@@ -59,7 +62,7 @@ const ProductDetailScreen = () => {
       {/*HEADER*/}
       <View className="absolute top-0 left-0 right-0 z-10 px-6 pt-20 pb-4 flex-row items-center justify-between">
         <TouchableOpacity
-          className="bg-black/50 backdrop-blur-xl size-12 rounded-full itmes-center justify-center"
+          className="bg-black/50 backdrop-blur-xl size-12 rounded-full items-center justify-center"
           onPress={() => router.back()}
           activeOpacity={0.7}
         >
