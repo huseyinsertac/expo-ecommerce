@@ -1,3 +1,11 @@
 node_modules
 .env
 uploads
+# Claw Code local artifacts
+.claw/settings.local.json
+.claw/sessions/
+.clawhip/
+.claw.json
+CLAUDE.md
+.sandbox-home/
+.sandbox-tmp/

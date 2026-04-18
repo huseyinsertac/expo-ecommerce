@@ -16,4 +16,19 @@ const useProducts = () => {
   return result;
 };
 
+export const useProduct = (productId: string) => {
+  const api = useApi();
+
+  const result = useQuery<Product>({
+    queryKey: ['product', productId],
+    queryFn: async () => {
+      const { data } = await api.get<Product>(`/products/${productId}`);
+      return data;
+    },
+    enabled: Boolean(productId),
+  });
+
+  return result;
+};
+
 export default useProducts;
