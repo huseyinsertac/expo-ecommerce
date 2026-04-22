@@ -84,7 +84,7 @@ export interface Review {
 
 export interface CartItem {
   _id: string;
-  productId: string | Product;
+  productId: Product;
   quantity: number;
 }
 

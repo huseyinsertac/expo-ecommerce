@@ -15,22 +15,35 @@ function useSocialAuth() {
   );
   const { startSSOFlow } = useSSO();
   const router = useRouter();
-  const redirectUrl = AuthSession.makeRedirectUri();
+  const redirectUrl = AuthSession.makeRedirectUri({
+    path: 'sso-callback',
+  });
 
   const handleSocialAuth = async (strategy: SocialStrategy) => {
     pendingSocialStrategy = strategy;
     setLoadingStrategy(strategy);
     setIsLoading(true);
     try {
+      if (__DEV__) {
+        console.log('Starting SSO flow with strategy:', strategy);
+        console.log('Redirect URL:', redirectUrl);
+      }
       const { createdSessionId, setActive } = await startSSOFlow({
         strategy,
         redirectUrl,
       });
 
+      //if (__DEV__) {
+      //  console.log('SSO flow result:', { createdSessionId, setActive: !!setActive });
+      //}
+
       if (createdSessionId && setActive) {
         await setActive({ session: createdSessionId });
         router.replace('/(tabs)');
       } else {
+        if (__DEV__) {
+          console.log('Authentication failed - no session created');
+        }
         Alert.alert(
           'Authentication Canceled',
           'No session was created. Please try signing in again.'

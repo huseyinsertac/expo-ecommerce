@@ -12,17 +12,45 @@ import orderRoutes from './routes/order.route.js';
 import reviewRoutes from './routes/review.route.js';
 import productRoutes from './routes/product.route.js';
 import cartRoutes from './routes/cart.route.js';
+import paymentRoutes from './routes/payment.route.js';
 import cors from 'cors';
 
 const app = express();
 
 const __dirname = path.resolve();
 
+app.use(
+  '/api/payment',
+  (req, res, next) => {
+    if (req.originalUrl === '/api/payment/webhook') {
+      express.raw({ type: 'application/json' })(req, res, next);
+    } else {
+      express.json()(req, res, next); //parse json or non-webhook routes
+    }
+  },
+  paymentRoutes
+);
+
 app.use(express.json());
 
 if (!ENV.CLIENT_URL) {
   throw new Error('CLIENT_URL environment variable is required');
 }
+
+/*app.use(
+  cors({
+    origin: [
+      ENV.CLIENT_URL,
+      'http://192.168.1.106:3000',
+      'http://192.168.1.112:3000',
+      'http://localhost:3000',
+      'http://localhost:8081',
+      'http://localhost:5173',
+    ],
+    credentials: true,
+  })
+);
+*/
 
 app.use(cors({ origin: ENV.CLIENT_URL, credentials: true }));
 
