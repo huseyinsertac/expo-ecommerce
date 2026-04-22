@@ -147,7 +147,7 @@ export async function handleWebhook(req, res) {
       // update product stock
       const items = JSON.parse(orderItems);
       for (const item of items) {
-        await Product.findByIdAndUpdate(item.productId, {
+        await Product.findByIdAndUpdate(item.product, {
           $inc: { stock: -item.quantity },
         });
       }
