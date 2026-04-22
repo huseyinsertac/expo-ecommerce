@@ -9,6 +9,8 @@ import {
 import { ClerkProvider } from '@clerk/clerk-expo';
 import { tokenCache } from '@clerk/clerk-expo/token-cache';
 import * as Sentry from '@sentry/react-native';
+import { StripeProvider, initStripe } from '@stripe/stripe-react-native';
+import { Platform } from 'react-native';
 
 const sentryDsn = process.env.EXPO_PUBLIC_SENTRY_DSN;
 
@@ -75,11 +77,35 @@ if (!clerkPublishableKey) {
   throw new Error('Missing EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY');
 }
 
+const stripePublishableKey = process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY;
+
+function AppContent() {
+  const content = <Stack screenOptions={{ headerShown: false }} />;
+
+  if (!stripePublishableKey) {
+    return content;
+  }
+
+  return (
+    <StripeProvider
+      publishableKey={stripePublishableKey}
+      merchantIdentifier="merchant.com.anonymous.mobile"
+      urlScheme="mobile"
+    >
+      {content}
+    </StripeProvider>
+  );
+}
+
 export default Sentry.wrap(function RootLayout() {
+  if (__DEV__) {
+    console.log('Clerk publishable key configured:', !!clerkPublishableKey);
+  }
+
   return (
     <ClerkProvider tokenCache={tokenCache} publishableKey={clerkPublishableKey}>
       <QueryClientProvider client={queryClient}>
-        <Stack screenOptions={{ headerShown: false }} />
+        <AppContent />
       </QueryClientProvider>
     </ClerkProvider>
   );

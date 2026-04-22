@@ -116,7 +116,7 @@ export async function updateAddress(req, res) {
     await user.save();
     res.status(200).json({
       message: 'Address updated successfully',
-      addressses: user.addresses,
+      addresses: user.addresses,
     });
   } catch (error) {
     console.error('Error updating address:', error);
@@ -129,7 +129,6 @@ export async function deleteAddress(req, res) {
     const { addressId } = req.params;
     const user = req.user;
 
-    //user.addresses.pull(addressId);
     const address = user.addresses.id(addressId);
     if (!address) {
       return res.status(404).json({ message: 'Address not found' });
@@ -138,7 +137,10 @@ export async function deleteAddress(req, res) {
     address.deleteOne();
     await user.save();
 
-    res.status(200).json({ message: 'Address deleted successfully' });
+    res.status(200).json({
+      message: 'Address deleted successfully',
+      addresses: user.addresses
+    });
   } catch (error) {
     console.error('Error deleting address:', error);
     res.status(500).json({ message: 'Internal server error' });
