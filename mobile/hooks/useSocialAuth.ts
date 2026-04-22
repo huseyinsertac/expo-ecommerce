@@ -16,7 +16,7 @@ function useSocialAuth() {
   const { startSSOFlow } = useSSO();
   const router = useRouter();
   const redirectUrl = AuthSession.makeRedirectUri({
-    path: 'sso-callback'
+    path: 'sso-callback',
   });
 
   const handleSocialAuth = async (strategy: SocialStrategy) => {
@@ -33,9 +33,9 @@ function useSocialAuth() {
         redirectUrl,
       });
 
-      if (__DEV__) {
-        console.log('SSO flow result:', { createdSessionId, setActive: !!setActive });
-      }
+      //if (__DEV__) {
+      //  console.log('SSO flow result:', { createdSessionId, setActive: !!setActive });
+      //}
 
       if (createdSessionId && setActive) {
         await setActive({ session: createdSessionId });

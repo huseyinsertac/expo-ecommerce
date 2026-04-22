@@ -1,7 +1,7 @@
 import { useAddresses } from '@/hooks/useAddresses';
 import { Address } from '@/types';
 import { Ionicons } from '@expo/vector-icons';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -26,7 +26,11 @@ const AddressSelectionModal = ({
 }: AddressSelectionModalProps) => {
   const [selectedAddress, setSelectedAddress] = useState<Address | null>(null);
   const { addresses, isLoading: addressesLoading } = useAddresses();
-
+  useEffect(() => {
+    if (!selectedAddress && addresses?.length) {
+      setSelectedAddress(addresses.find((a) => a.isDefault) ?? addresses[0]);
+    }
+  }, [addresses, selectedAddress]);
   return (
     <Modal
       visible={visible}
@@ -48,7 +52,6 @@ const AddressSelectionModal = ({
               <Ionicons name="close" size={24} color="#FFFFFF" />
             </TouchableOpacity>
           </View>
-
           {/* ADDRESSES LIST */}
           <ScrollView className="flex-1 p-6">
             {addressesLoading ? (

@@ -204,7 +204,7 @@ const CartScreen = () => {
                 {/* product image */}
                 <View className="relative">
                   <Image
-                    source={item.productId.images[0].url}
+                    source={item.productId.images?.[0]?.url}
                     className="bg-background-lighter"
                     contentFit="cover"
                     style={{ width: 112, height: 112, borderRadius: 16 }}
@@ -301,6 +301,118 @@ const CartScreen = () => {
               </View>
             </View>
           ))}
+
+          {cartItems.map((item, index) => {
+            const product =
+              typeof item.productId === 'string' ? null : item.productId;
+
+            return (
+              <View
+                key={item._id}
+                className="bg-surface rounded-3xl overflow-hidden "
+              >
+                <View className="p-4 flex-row">
+                  {/* product image */}
+                  <View className="relative">
+                    <Image
+                      source={item.productId.images[0].url}
+                      className="bg-background-lighter"
+                      contentFit="cover"
+                      style={{ width: 112, height: 112, borderRadius: 16 }}
+                    />
+                    <View className="absolute top-2 right-2 bg-primary rounded-full px-2 py-0.5">
+                      <Text className="text-background text-xs font-bold">
+                        ×{item.quantity}
+                      </Text>
+                    </View>
+                  </View>
+
+                  <View className="flex-1 ml-4 justify-between">
+                    <View>
+                      <Text
+                        className="text-text-primary font-bold text-lg leading-tight"
+                        numberOfLines={2}
+                      >
+                        {item.productId.name}
+                      </Text>
+                      <View className="flex-row items-center mt-2">
+                        <Text className="text-primary font-bold text-2xl">
+                          ${(item.productId.price * item.quantity).toFixed(2)}
+                        </Text>
+                        <Text className="text-text-secondary text-sm ml-2">
+                          ${item.productId.price.toFixed(2)} each
+                        </Text>
+                      </View>
+                    </View>
+
+                    <View className="flex-row items-center mt-3">
+                      <TouchableOpacity
+                        className="bg-background-lighter rounded-full w-9 h-9 items-center justify-center"
+                        activeOpacity={0.7}
+                        onPress={() =>
+                          handleQuantityChange(
+                            item.productId._id,
+                            item.quantity,
+                            -1
+                          )
+                        }
+                        disabled={isUpdating}
+                      >
+                        {isUpdating ? (
+                          <ActivityIndicator size="small" color="#FFFFFF" />
+                        ) : (
+                          <Ionicons name="remove" size={18} color="#FFFFFF" />
+                        )}
+                      </TouchableOpacity>
+
+                      <View className="mx-4 min-w-[32px] items-center">
+                        <Text className="text-text-primary font-bold text-lg">
+                          {item.quantity}
+                        </Text>
+                      </View>
+
+                      <TouchableOpacity
+                        className="bg-primary rounded-full w-9 h-9 items-center justify-center"
+                        activeOpacity={0.7}
+                        onPress={() =>
+                          handleQuantityChange(
+                            item.productId._id,
+                            item.quantity,
+                            1
+                          )
+                        }
+                        disabled={isUpdating}
+                      >
+                        {isUpdating ? (
+                          <ActivityIndicator size="small" color="#121212" />
+                        ) : (
+                          <Ionicons name="add" size={18} color="#121212" />
+                        )}
+                      </TouchableOpacity>
+
+                      <TouchableOpacity
+                        className="ml-auto bg-red-500/10 rounded-full w-9 h-9 items-center justify-center"
+                        activeOpacity={0.7}
+                        onPress={() =>
+                          handleRemoveItem(
+                            item.productId._id,
+                            item.productId.name
+                          )
+                        }
+                        disabled={isRemoving}
+                      >
+                        <Ionicons
+                          name="trash-outline"
+                          size={18}
+                          color="#EF4444"
+                        />
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                </View>
+              </View>
+            );
+          })}
         </View>
 
         <OrderSummary

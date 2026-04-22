@@ -37,10 +37,20 @@ if (!ENV.CLIENT_URL) {
   throw new Error('CLIENT_URL environment variable is required');
 }
 
-/*app.use(cors({
-  origin: [ENV.CLIENT_URL, 'http://192.168.1.106:3000', 'http://localhost:8081', 'http://localhost:5173'],
-  credentials: true
-}));*/
+/*app.use(
+  cors({
+    origin: [
+      ENV.CLIENT_URL,
+      'http://192.168.1.106:3000',
+      'http://192.168.1.112:3000',
+      'http://localhost:3000',
+      'http://localhost:8081',
+      'http://localhost:5173',
+    ],
+    credentials: true,
+  })
+);
+*/
 
 app.use(cors({ origin: ENV.CLIENT_URL, credentials: true }));
 
