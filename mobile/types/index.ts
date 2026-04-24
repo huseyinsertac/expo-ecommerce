@@ -57,7 +57,7 @@ export interface Order {
     fullName: string;
     streetAddress: string;
     city: string;
-    state: string;
+    stateCode: string;
     zip: string;
     phoneNumber: string;
   };
