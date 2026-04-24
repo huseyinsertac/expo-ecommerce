@@ -28,12 +28,12 @@ export async function createOrder(req, res) {
         // Decrement stocks atomically
         for (const item of orderItems) {
           const updatedProduct = await Product.findOneAndUpdate(
-            { _id: item.product._id, stock: { $gte: item.quantity } },
+            { _id: item.productId, stock: { $gte: item.quantity } },
             { $inc: { stock: -item.quantity } },
             { session }
           );
           if (!updatedProduct) {
-            throw new Error(`Not enough stock for product ${item.product._id}`);
+            throw new Error(`Not enough stock for product ${item.productId}`);
           }
         }
 

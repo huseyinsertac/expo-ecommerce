@@ -37,7 +37,7 @@ export async function createPaymentIntent(req, res) {
 
       subtotal += product.price * item.quantity;
       validatedItems.push({
-        product: product._id.toString(),
+        productId: product._id.toString(),
         name: product.name,
         price: product.price,
         quantity: item.quantity,
@@ -147,7 +147,7 @@ export async function handleWebhook(req, res) {
       // update product stock
       const items = JSON.parse(orderItems);
       for (const item of items) {
-        await Product.findByIdAndUpdate(item.product, {
+        await Product.findByIdAndUpdate(item.productId, {
           $inc: { stock: -item.quantity },
         });
       }
