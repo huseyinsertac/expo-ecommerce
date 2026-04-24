@@ -1,16 +1,15 @@
 import mongoose from 'mongoose';
 
 const shippingAddressSchema = new mongoose.Schema({
-  label: {
-    type: String,
-    required: true,
-  },
+  label: { type: String },
   fullName: { type: String, required: true },
   streetAddress: { type: String, required: true },
+  street: { type: String },
   city: { type: String, required: true },
-  state: { type: String, required: true },
+  stateCode: { type: String, required: true },
   zip: { type: String, required: true },
   phoneNumber: { type: String, required: true },
+  country: { type: String },
 });
 
 const orderItemSchema = new mongoose.Schema({

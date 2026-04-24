@@ -53,13 +53,15 @@ export interface Order {
   clerkId: string;
   orderItems: OrderItem[];
   shippingAddress: {
-    label: string;
+    label?: string;
     fullName: string;
     streetAddress: string;
+    street?: string;
     city: string;
-    state: string;
+    stateCode: string;
     zip: string;
     phoneNumber: string;
+    country?: string;
   };
   paymentResult: {
     id: string;

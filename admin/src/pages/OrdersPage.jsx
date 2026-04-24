@@ -103,7 +103,7 @@ function OrdersPage() {
                           </div>
                           <div className="text-sm opacity-60">
                             {order.shippingAddress?.city || 'N/A'},{' '}
-                            {order.shippingAddress?.state || 'N/A'}
+                            {order.shippingAddress?.stateCode || 'N/A'}
                           </div>
                         </td>
 
