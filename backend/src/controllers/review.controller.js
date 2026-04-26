@@ -14,12 +14,6 @@ export async function createReview(req, res) {
       });
     }
 
-    if (!comment) {
-      return res.status(400).json({
-        message: 'Comment is required.',
-      });
-    }
-
     const user = req.user;
 
     const order = await Order.findById(orderId);
@@ -41,8 +35,7 @@ export async function createReview(req, res) {
 
     // verify product is in the order.
     const productInOrder = order.orderItems.find(
-      (item) =>
-        item.productId && item.productId.toString() === String(productId)
+      (item) => item.productId && item.productId.toString() === productId
     );
     if (!productInOrder) {
       return res
