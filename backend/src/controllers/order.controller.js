@@ -72,19 +72,28 @@ export async function createOrder(req, res) {
 export async function getUserOrders(req, res) {
   try {
     const orders = await Order.find({ clerkId: req.user.clerkId })
-      .populate('orderItems.product')
+      .populate('orderItems.productId')
       .sort({ createdAt: -1 });
 
     //check if each order has been reviewed.
     const ordersWithReviewStatus = await Promise.all(
       orders.map(async (order) => {
-        const review = await Review.findOne({
+        // Check if all products in the order have been reviewed
+        const reviews = await Review.find({
           orderId: order._id,
+          userId: order.user,
         });
+
+        const reviewedProductIds = reviews.map((review) =>
+          review.productId.toString()
+        );
+        const allProductsReviewed = order.orderItems.every((item) =>
+          reviewedProductIds.includes(item.productId._id.toString())
+        );
 
         return {
           ...order.toObject(),
-          hasReviewed: !!review,
+          hasReviewed: allProductsReviewed,
         };
       })
     );

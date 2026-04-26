@@ -40,7 +40,7 @@ export interface User {
 
 export interface OrderItem {
   _id: string;
-  productId: string | Product;
+  productId: Product;
   name: string;
   price: number;
   quantity: number;
@@ -71,6 +71,7 @@ export interface Order {
   status: 'pending' | 'shipped' | 'delivered' | 'cancelled';
   createdAt: string;
   updatedAt: string;
+  hasReviewed: boolean;
 }
 
 export interface Review {

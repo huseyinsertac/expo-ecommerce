@@ -18,6 +18,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { useQueryClient } from '@tanstack/react-query';
 
 const CartScreen = () => {
   const api = useApi();
@@ -37,6 +38,7 @@ const CartScreen = () => {
   const { addresses, isLoading: addressesLoading } = useAddresses();
 
   const { initPaymentSheet, presentPaymentSheet } = useStripe();
+  const queryClient = useQueryClient();
 
   const [paymentLoading, setPaymentLoading] = useState(false);
   const [addressModalVisible, setAddressModalVisible] = useState(false);
@@ -165,6 +167,8 @@ const CartScreen = () => {
           [{ text: 'OK', onPress: () => {} }]
         );
         await clearCart();
+        // Refresh orders to show the new order
+        queryClient.invalidateQueries({ queryKey: ['orders'] });
       }
     } catch (error) {
       Sentry.logger.error('Payment failed', {
